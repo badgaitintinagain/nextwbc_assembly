@@ -3,6 +3,7 @@ import Link from "next/link";
 import Header from "@/components/header";
 import CardSlider from "@/components/cardslider";
 import Footer from "@/components/footer";
+import PredictDemo from "@/components/predict_demo";
 
 export default function Home() {
   return (
@@ -19,16 +20,10 @@ export default function Home() {
       </div>
       <div className="flex flex-col items-center justify-center px-8 flex-grow">
         <p className="text-black text-lg text-center mt-4">
-          Interesting? then Explore it!
+          Interesting? Try a demo here...
         </p>
-
-        <Link href="/#">
-          <button className="mt-2 px-6 py-2 bg-blue-500 text-white rounded-xl text-lg hover:bg-blue-700 transition">
-            Prediction
-          </button>
-        </Link>
       </div>
-
+      <PredictDemo />
       <Footer />
     </main>
   );
