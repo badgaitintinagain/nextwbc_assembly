@@ -4,10 +4,14 @@ import Footer from "@/components/footer";
 
 export default function Prediction() {
     return (
-        <>
-            <Header />
-            <h1>Hello</h1>
-            <Footer />
-        </>
+    <>
+        <Header />
+            <div>
+                <h1 className="text-black">
+                    Good Morning
+                </h1>
+            </div>
+        <Footer />
+    </>
     )
 }

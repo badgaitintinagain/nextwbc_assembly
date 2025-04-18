@@ -8,19 +8,19 @@ export default function CardSlider() {
     {
       id: 0,
       title: "Easy",
-      image: "/images/heatmapdf.png",
+      image: "/images/imagen_pic.jpg",
       description: "Just upload an images then press predict *kapaw* "
     },
     {
       id: 1,
       title: "Efficient",
-      image: "/images/heatmapdf.png",
+      image: "/images/imagen_pic.jpg",
       description: "we use small size of YOLO but tuning it to be fast and accurate by small dataset"
     },
     {
       id: 2,
       title: "Elastic",
-      image: "/images/heatmapdf.png",
+      image: "/images/imagen_pic.jpg",
       description: "I..i forgot - Nevermind, we have history of old prediction. stored up to 150 Hours"
     },
   ];

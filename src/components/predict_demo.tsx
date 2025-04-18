@@ -1,16 +1,22 @@
 "use client"
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface ImageItem {
   file: File | null;
   previewUrl: string;
   fileName: string;
+  uploadTime?: number; // เพิ่มเวลาอัปโหลด
+}
+
+interface UploadRecord {
+  fileName: string;
+  timestamp: number;
 }
 
 const PredictDemo = () => {
   const [selectedImage, setSelectedImage] = useState<ImageItem>({
     file: null,
-    previewUrl: "/images/heatmapdf.png",
+    previewUrl: "/images/imagen_pic.jpg",
     fileName: "No file selected"
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -18,23 +24,118 @@ const PredictDemo = () => {
   const [recentImages, setRecentImages] = useState<ImageItem[]>(
     Array(5).fill({
       file: null, 
-      previewUrl: "/images/heatmapdf.png",
+      previewUrl: "/images/imagen_pic.jpg",
       fileName: "Default image"
     })
   );
+  
+  // สถานะสำหรับการจำกัดการอัปโหลด
+  const [uploadLimitReached, setUploadLimitReached] = useState(false);
+  const [timeUntilReset, setTimeUntilReset] = useState<string>("");
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // โหลดประวัติการอัปโหลดจาก localStorage เมื่อ component โหลด
+  useEffect(() => {
+    checkUploadLimit();
+    
+    // ตั้งเวลาตรวจสอบทุก 1 นาที
+    const interval = setInterval(() => {
+      checkUploadLimit();
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // ฟังก์ชันตรวจสอบการจำกัดการอัปโหลด
+  const checkUploadLimit = () => {
+    try {
+      // ดึงประวัติการอัปโหลดจาก localStorage
+      const storedUploads = localStorage.getItem('recentUploads');
+      if (!storedUploads) {
+        setUploadLimitReached(false);
+        return;
+      }
+      
+      const uploads: UploadRecord[] = JSON.parse(storedUploads);
+      const oneHourAgo = Date.now() - 600000; // 1 hour in milliseconds
+      
+      // กรองเฉพาะการอัปโหลดใน 1 ชั่วโมงที่ผ่านมา
+      const recentUploads = uploads.filter(upload => upload.timestamp > oneHourAgo);
+      
+      // บันทึกกลับ localStorage (ลบรายการเก่า)
+      localStorage.setItem('recentUploads', JSON.stringify(recentUploads));
+      
+      // ตรวจสอบว่าถึงขีดจำกัดหรือไม่
+      const isLimited = recentUploads.length >= 5;
+      setUploadLimitReached(isLimited);
+      
+      // คำนวณเวลาที่เหลือจนกว่าจะสามารถอัปโหลดได้อีกครั้ง
+      if (isLimited && recentUploads.length > 0) {
+        const oldestUpload = recentUploads.reduce((oldest, current) => 
+          current.timestamp < oldest.timestamp ? current : oldest
+        );
+        
+        const resetTime = oldestUpload.timestamp + 600000;
+        const timeLeft = resetTime - Date.now();
+        
+        if (timeLeft > 0) {
+          const minutes = Math.floor(timeLeft / 60000);
+          const seconds = Math.floor((timeLeft % 60000) / 1000);
+          setTimeUntilReset(`${minutes}m ${seconds}s`);
+        } else {
+          setUploadLimitReached(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking upload limit:", error);
+    }
+  };
+
+  // ฟังก์ชันบันทึกประวัติการอัปโหลด
+  const recordUpload = (fileName: string) => {
+    try {
+      // ดึงประวัติการอัปโหลดจาก localStorage
+      const storedUploads = localStorage.getItem('recentUploads');
+      let uploads: UploadRecord[] = storedUploads ? JSON.parse(storedUploads) : [];
+      
+      // เพิ่มการอัปโหลดใหม่
+      uploads.push({
+        fileName: fileName,
+        timestamp: Date.now()
+      });
+      
+      // บันทึกกลับ localStorage
+      localStorage.setItem('recentUploads', JSON.stringify(uploads));
+      
+      // ตรวจสอบการจำกัดการอัปโหลดอีกครั้ง
+      checkUploadLimit();
+    } catch (error) {
+      console.error("Error recording upload:", error);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
+      // ตรวจสอบข้อจำกัดการอัปโหลด
+      if (uploadLimitReached) {
+        alert(`Upload limit reached. Please wait ${timeUntilReset} before uploading more images.`);
+        return;
+      }
+      
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         const newImageItem: ImageItem = {
           file: selectedFile,
           previewUrl: reader.result as string,
-          fileName: selectedFile.name
+          fileName: selectedFile.name,
+          uploadTime: Date.now()
         };
+        
+        // บันทึกประวัติการอัปโหลด
+        recordUpload(selectedFile.name);
         
         // Set as selected image
         setSelectedImage(newImageItem);
@@ -57,6 +158,11 @@ const PredictDemo = () => {
   };
 
   const handleUploadClick = () => {
+    // ตรวจสอบข้อจำกัดการอัปโหลดก่อนเปิด file picker
+    if (uploadLimitReached) {
+      alert(`Upload limit reached. Please wait ${timeUntilReset} before uploading more images.`);
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -113,7 +219,14 @@ const PredictDemo = () => {
           {/* Upload */}
           <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-4 aspect-square">
             <h1 className="text-center text-black text-lg">Upload Images Here</h1>
-            <p className="text-center text-black text-xs mb-3">Up to 5 Image per 60 Minutes</p>
+            <p className="text-center text-black text-xs mb-3">Up to 5 Images per 60 Minutes</p>
+            
+            {uploadLimitReached && (
+              <div className="text-red-500 text-xs text-center mb-2">
+                Upload limit reached. Please wait {timeUntilReset} before uploading more images.
+              </div>
+            )}
+            
             <input 
               type="file" 
               ref={fileInputRef}
@@ -122,8 +235,9 @@ const PredictDemo = () => {
               className="hidden" 
             />
             <button 
-              className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition"
+              className={`${uploadLimitReached ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded-xl transition`}
               onClick={handleUploadClick}
+              disabled={uploadLimitReached}
             >
               Upload
             </button>
