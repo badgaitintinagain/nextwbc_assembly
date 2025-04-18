@@ -11,20 +11,24 @@ export default function Home() {
       <Header />
 
       {/* content ตรงกลาง */}
-      <div className="flex flex-col items-center justify-center px-8 mt-12 flex-grow">
+      <div className="flex flex-col items-center justify-center px-8 mt-12">
         <h1 className="text-black text-4xl">NextWBC</h1>
         <p className="text-black text-lg text-center mt-4">
           High-accuracy white blood cell detection and classification powered by the latest Ultralytics YOLO model.
         </p>
         <CardSlider />
       </div>
-      <div className="flex flex-col items-center justify-center px-8 flex-grow">
+
+      <div className="flex flex-col items-center justify-center px-8">
         <p className="text-black text-lg text-center mt-4">
           Interesting? Try a demo here...
         </p>
       </div>
+
       <PredictDemo />
+
       <Footer />
     </main>
   );
 }
+
