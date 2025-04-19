@@ -69,7 +69,7 @@ const Header = () => {
                         <Link href="/" className="hover:text-blue-600 transition">Home</Link>
                         <Link href="/prediction" className="hover:text-blue-600 transition">Prediction</Link>
                         <Link href="/tutorial" className="hover:text-blue-600 transition">Tutorial</Link>
-                        <Link href="/analysis" className="hover:text-blue-600 transition">Analysis</Link>
+                        <Link href="/analysis" className="hover:text-blue-600 transition">Vault</Link>
                         {user.role === "ADMIN" && (
                             <Link href="/admin/dashboard" className="hover:text-blue-600 transition">Admin</Link>
                         )}
