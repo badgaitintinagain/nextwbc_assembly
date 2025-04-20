@@ -34,7 +34,7 @@ export default function CardSlider() {
   }, [cards.length]);
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 bg-gray-100 px-8">
+    <div className="flex flex-col items-center justify-center py-12 px-8">
       <div className="flex space-x-4">
         {cards.map((card, index) => (
           <div
