@@ -1,5 +1,5 @@
 import prisma from "@/app/lib/prisma";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { compare } from "bcrypt";
 import type { NextAuthOptions } from "next-auth";
 import NextAuth from "next-auth";
