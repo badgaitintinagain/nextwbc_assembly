@@ -13,6 +13,18 @@ interface UploadRecord {
   timestamp: number;
 }
 
+interface Detection {
+  class: string;
+  confidence: number;
+  box: number[];
+}
+
+interface PredictResponse {
+  filename: string;
+  detections: Detection[];
+  annotated_image?: string;
+}
+
 const PredictDemo = () => {
   const [selectedImage, setSelectedImage] = useState<ImageItem>({
     file: null,
@@ -20,7 +32,7 @@ const PredictDemo = () => {
     fileName: "No file selected"
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<PredictResponse | null>(null);
   const [recentImages, setRecentImages] = useState<ImageItem[]>(
     Array(5).fill({
       file: null, 
@@ -97,7 +109,7 @@ const PredictDemo = () => {
     try {
       // ดึงประวัติการอัปโหลดจาก localStorage
       const storedUploads = localStorage.getItem('recentUploads');
-      let uploads: UploadRecord[] = storedUploads ? JSON.parse(storedUploads) : [];
+      const uploads: UploadRecord[] = storedUploads ? JSON.parse(storedUploads) : [];
       
       // เพิ่มการอัปโหลดใหม่
       uploads.push({
@@ -291,7 +303,7 @@ const PredictDemo = () => {
             {/* Results overlay */}
             {results && selectedImage.fileName === results.filename && (
               <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-2 text-sm">
-                <p>Detected: {results.detections.map((d: any) => `${d.class} (${(d.confidence * 100).toFixed(1)}%)`).join(', ')}</p>
+                <p>Detected: {results.detections.map(d => `${d.class} (${(d.confidence * 100).toFixed(1)}%)`).join(', ')}</p>
               </div>
             )}
           </div>
