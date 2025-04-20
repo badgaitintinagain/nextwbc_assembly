@@ -1,19 +1,24 @@
-import { PrismaClient } from "@prisma/client";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import prisma from "@/app/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/authOptions";
-
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
+    // Fix: Pass authOptions correctly according to next-auth's expected type
     const session = await getServerSession(authOptions);
 
     // Check if user is authenticated and an admin
     if (!session || session.user.role !== "ADMIN") {
-      return new NextResponse("Unauthorized", { status: 403 });
+      return new NextResponse(
+        JSON.stringify({ error: "Unauthorized access" }),
+        {
+          status: 403,
+        }
+      );
     }
 
+    // Only an admin can fetch all users
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -22,14 +27,16 @@ export async function GET() {
         role: true,
         createdAt: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
     });
 
     return NextResponse.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return new NextResponse(
+      JSON.stringify({ error: "Error fetching users" }),
+      {
+        status: 500,
+      }
+    );
   }
 }

@@ -1,19 +1,18 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
+import prisma from "@/app/lib/prisma";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { compare } from "bcrypt";
+import type { NextAuthOptions } from "next-auth";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const prisma = new PrismaClient();
-
-const handler = NextAuth({
-  adapter: PrismaAdapter(prisma),
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: "credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -30,12 +29,12 @@ const handler = NextAuth({
           return null;
         }
 
-        const isPasswordValid = await bcrypt.compare(
+        const passwordValid = await compare(
           credentials.password,
           user.password
         );
 
-        if (!isPasswordValid) {
+        if (!passwordValid) {
           return null;
         }
 
@@ -48,6 +47,14 @@ const handler = NextAuth({
       },
     }),
   ],
+  pages: {
+    signIn: "/signin",
+    signUp: "/signup",
+  },
+  session: {
+    strategy: "jwt" as const,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -62,13 +69,8 @@ const handler = NextAuth({
       return session;
     },
   },
-  pages: {
-    signIn: "/signin",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  debug: process.env.NODE_ENV === 'development',
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
