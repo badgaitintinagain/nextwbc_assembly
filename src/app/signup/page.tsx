@@ -57,7 +57,7 @@ export default function SignUp() {
       <Header />
       <div className="flex min-h-[calc(100vh-130px)] bg-gray-50 items-center justify-center py-12 px-4">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-          <h2 className="text-center text-2xl font-bold mb-6">Create an account</h2>
+          <h2 className="text-center text-2xl font-bold mb-6 text-black">Create an account</h2>
           
           {error && (
             <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">

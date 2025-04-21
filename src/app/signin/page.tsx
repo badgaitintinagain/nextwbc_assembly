@@ -4,15 +4,23 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function SignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // Check for success message from registration
+  useEffect(() => {
+    if (searchParams?.get("registered") === "true") {
+      setError("Account created successfully. Please sign in.");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,14 +28,17 @@ export default function SignIn() {
     setError("");
 
     try {
+      console.log("Attempting sign in for:", email);
       const result = await signIn("credentials", {
         redirect: false,
         email,
         password,
       });
 
+      console.log("Sign in result:", result);
+
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Invalid email or password. Please check your credentials and try again.");
         setLoading(false);
         return;
       }
@@ -35,8 +46,8 @@ export default function SignIn() {
       router.refresh();
       router.push("/");
     } catch (error) {
+      console.error("Sign in error:", error);
       setError("Something went wrong. Please try again.");
-      console.error(error);
       setLoading(false);
     }
   };
@@ -46,7 +57,7 @@ export default function SignIn() {
       <Header />
       <div className="flex min-h-[calc(100vh-130px)] bg-gray-50 items-center justify-center py-12 px-4">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-          <h2 className="text-center text-2xl font-bold mb-6">Sign in to NextWBC</h2>
+          <h2 className="text-center text-2xl font-bold mb-6 text-black">Sign in</h2>
           
           {error && (
             <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">
