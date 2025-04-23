@@ -231,7 +231,7 @@ const PredictDemo = () => {
           {/* Upload */}
           <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-4 aspect-square">
             <h1 className="text-center text-black text-lg">Upload Images Here</h1>
-            <p className="text-center text-black text-xs mb-3">Up to 5 Images per 60 Minutes</p>
+            <p className="text-center text-black text-xs mb-3">Up to 5 Images per 10 Minutes</p>
             
             {uploadLimitReached && (
               <div className="text-red-500 text-xs text-center mb-2">

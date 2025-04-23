@@ -40,6 +40,9 @@ export default function Home() {
         </div>
 
         <PredictDemo />
+        <div className="mb-4 mt-8">
+          <p className="text-center"> If you like it you can try at Prediction Page</p>
+        </div>
         <Footer />
       </main>
     </div>

@@ -2,6 +2,7 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import React, { useRef, useState } from "react";
 
 interface ImageItem {
@@ -33,6 +34,7 @@ export default function Prediction() {
   const [resultsHistory, setResultsHistory] = useState<PredictionResult[]>([]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []); // allow any number for recent images
@@ -70,26 +72,60 @@ export default function Prediction() {
     setIsLoading(true);
     
     try {
+      // Create a new log entry
+      const logEntry = {
+        id: Date.now(), // Use timestamp as unique ID
+        images: [], // Will store all processed image URLs
+        timestamp: new Date().toLocaleString(),
+        imageCount: selectedImages.length,
+        detections: [], // Will store all detections
+        annotatedImages: [] // Add this array to store annotated versions
+      };
+      
+      // Process each selected image
       for (const img of selectedImages) {
         const formData = new FormData();
         formData.append('file', img.file!);
         const response = await fetch('http://localhost:8000/predict/', { method: 'POST', body: formData });
+        
         if (!response.ok) throw new Error('Prediction failed');
+        
         const data = await response.json();
-        // build result
+        
+        // Add this image to the log
+        logEntry.images.push(img.previewUrl);
+        
+        // Add the annotated image to the log (if available)
+        logEntry.annotatedImages.push(data.annotated_image || img.previewUrl);
+        
+        // Add detections to the log
+        data.detections.forEach(detection => {
+          logEntry.detections.push(detection);
+        });
+        
+        // Still create individual results for the current page
         const newResult = {
           ...data,
           predictedImage: { previewUrl: img.previewUrl, fileName: img.fileName },
           timestamp: new Date().toLocaleString()
         };
+        
         setResultsHistory(prev => [newResult as PredictionResult, ...prev]);
       }
-    
+      
+      // Save the log entry to localStorage
+      const existingLogs = JSON.parse(localStorage.getItem('predictionLogs') || '[]');
+      localStorage.setItem('predictionLogs', JSON.stringify([logEntry, ...existingLogs]));
+      
     } catch (error) {
       console.error('Error predicting:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  const handleViewVault = () => {
+    router.push('/vault');
   };
 
   return (
@@ -157,13 +193,21 @@ export default function Prediction() {
               <div className="border border-gray-200 rounded-lg p-2 flex flex-col flex-1 min-h-0">
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="text-gray-800 text-sm font-medium">Preview & Prediction</h2>
-                  <button 
-                    className={`${isLoading ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600'} text-white px-2 py-1 rounded-md text-xs`}
-                    onClick={handlePredict}
-                    disabled={isLoading || selectedImages.length === 0}
-                  >
-                    {isLoading ? 'Processing...' : 'Predict'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md text-xs"
+                      onClick={handleViewVault}
+                    >
+                      View Vault
+                    </button>
+                    <button 
+                      className={`${isLoading ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600'} text-white px-2 py-1 rounded-md text-xs`}
+                      onClick={handlePredict}
+                      disabled={isLoading || selectedImages.length === 0}
+                    >
+                      {isLoading ? 'Processing...' : 'Predict'}
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Image preview */}
