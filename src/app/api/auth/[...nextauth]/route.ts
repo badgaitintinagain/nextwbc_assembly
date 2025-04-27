@@ -1,9 +1,8 @@
+import prisma from "@/app/lib/prisma";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { compare } from "bcrypt";
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-// Import the prisma client correctly
-import prisma from "@/app/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -70,6 +69,8 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt" as const,
     maxAge: 15 * 60, // 15 minutes in seconds
   },
+  // Add the secret configuration
+  secret: process.env.NEXTAUTH_SECRET || "YOUR_FALLBACK_SECRET_DO_NOT_USE_IN_PRODUCTION",
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
