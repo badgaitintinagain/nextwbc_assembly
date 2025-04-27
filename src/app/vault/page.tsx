@@ -1,25 +1,64 @@
 "use client";
 
+import ClassDistributionChart from "@/components/distributegraph";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { useEffect, useState } from "react";
 
 export default function Vault() {
-    // State for logs, selected log and image
+    // State สำหรับ logs, selected log และ image
     const [logs, setLogs] = useState([]);
     const [selectedLog, setSelectedLog] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [showBoundingBoxes, setShowBoundingBoxes] = useState(true);
-    const [annotatedImages, setAnnotatedImages] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Fetch logs from localStorage on component mount
+    // ดึงข้อมูล logs จาก database
     useEffect(() => {
-        const storedLogs = JSON.parse(localStorage.getItem('predictionLogs') || '[]');
-        setLogs(storedLogs);
+        const fetchLogs = async () => {
+            try {
+                setIsLoading(true);
+                const response = await fetch('/api/predictions');
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to fetch prediction logs');
+                }
+                
+                const data = await response.json();
+                console.log('Fetched data:', data); // เพิ่ม log เพื่อ debug
+                
+                // ตรวจสอบโครงสร้างข้อมูล
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid data format: expected an array');
+                }
+                
+                // แปลงข้อมูลด้วยความระมัดระวัง
+                const formattedLogs = data.map(log => ({
+                    id: log.id,
+                    timestamp: new Date(log.timestamp).toLocaleString(),
+                    imageCount: log.imageCount || 0,
+                    detections: log.detections || [],
+                    // สร้าง URL สำหรับดึงรูปภาพ เฉพาะรูปที่มีข้อมูล
+                    images: Array.isArray(log.images) 
+                        ? log.images.map(img => `/api/predictions/images/${img.id}`) 
+                        : [],
+                    annotatedImages: Array.isArray(log.images) 
+                        ? log.images.map(img => `/api/predictions/images/${img.id}?type=annotated`) 
+                        : []
+                }));
+                
+                setLogs(formattedLogs);
+            } catch (err) {
+                console.error('Error fetching prediction logs:', err);
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
         
-        // Also load annotated images from localStorage if available
-        const storedAnnotatedImages = JSON.parse(localStorage.getItem('annotatedImages') || '{}');
-        setAnnotatedImages(storedAnnotatedImages);
+        fetchLogs();
     }, []);
 
     // Handle log selection
@@ -44,32 +83,55 @@ export default function Vault() {
     const getDisplayImage = () => {
         if (!selectedImage) return null;
         
-        // If showing bounding boxes, check different sources for annotated images
+        // If showing bounding boxes, try to get annotated image
         if (showBoundingBoxes) {
-            // First check if the log has annotatedImages property (array format)
-            if (selectedLog?.annotatedImages) {
-                const index = selectedLog.images.indexOf(selectedImage);
-                return selectedLog.annotatedImages[index] || selectedImage;
-            }
-            
-            // Then check if the image itself contains annotated_image property
-            if (selectedLog?.results) {
-                const matchingResult = selectedLog.results.find(
-                    result => result.originalImage === selectedImage
-                );
-                if (matchingResult?.annotated_image) {
-                    return matchingResult.annotated_image;
-                }
-            }
-            
-            // Finally check our separate annotatedImages lookup object
-            if (annotatedImages[selectedImage]) {
-                return annotatedImages[selectedImage];
+            const index = selectedLog.images.indexOf(selectedImage);
+            if (index !== -1 && selectedLog?.annotatedImages && selectedLog.annotatedImages[index]) {
+                return selectedLog.annotatedImages[index];
             }
         }
         
-        // Otherwise show the original
+        // Fallback to original image
         return selectedImage;
+    };
+
+    // แก้ไขส่วน Detection Summary ในโค้ดเดิม
+
+    // เพิ่มฟังก์ชัน helper ก่อน return statement
+    const getGroupedDetections = () => {
+        if (!selectedLog?.detections) return {};
+        
+        // จัดกลุ่ม detections ตามประเภท (class)
+        const grouped = {};
+        
+        selectedLog.detections.forEach((detection, index) => {
+            // หา imageIndex โดยใช้ metadata ถ้ามี หรือใช้ default ที่ 0
+            const imageIndex = detection.imageIndex !== undefined ? detection.imageIndex : 0;
+            
+            if (!grouped[detection.class]) {
+                grouped[detection.class] = [];
+            }
+            
+            grouped[detection.class].push({
+                ...detection,
+                detectionIndex: index,
+                imageIndex: imageIndex
+            });
+        });
+        
+        return grouped;
+    };
+
+    // ฟังก์ชันสำหรับนำทางไปยังรูปภาพที่มีการตรวจจับนี้
+    const navigateToDetectionImage = (imageIndex) => {
+      console.log("Navigating to image index:", imageIndex); // ดูค่า imageIndex ที่ได้รับ
+      
+      if (selectedLog?.images && selectedLog.images[imageIndex]) {
+        console.log("Found image at index:", imageIndex, "URL:", selectedLog.images[imageIndex]);
+        setSelectedImage(selectedLog.images[imageIndex]);
+      } else {
+        console.error("No image found at index:", imageIndex, "Available images:", selectedLog?.images?.length || 0);
+      }
     };
 
     return (
@@ -81,8 +143,22 @@ export default function Vault() {
                         <h3 className="text-lg font-medium text-gray-900 mb-4">Prediction Logs</h3>
                         {logs.length === 0 ? (
                             <div className="text-center p-6 text-gray-500">
-                                <p>No prediction logs yet</p>
-                                <p className="text-sm mt-2">Run predictions in the Prediction page to see them here</p>
+                                {isLoading ? (
+                                    <div className="flex flex-col items-center">
+                                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                                        <p>Loading Prediction Data...</p>
+                                    </div>
+                                ) : error ? (
+                                    <div>
+                                        <p>Error due Loading Data</p>
+                                        <p className="text-sm mt-2 text-red-500">{error}</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p>No Prediction Result History</p>
+                                        <p className="text-sm mt-2">Predict at Prediction to see a results here</p>
+                                    </>
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -192,20 +268,45 @@ export default function Vault() {
                         )}
                     </div>
                     
-                    <div className="col-start-5 bg-white rounded-lg shadow p-4">
+                    <div className="col-start-5 bg-white rounded-lg shadow p-4 overflow-y-auto">
                         <h3 className="text-lg font-medium text-gray-900 mb-4">Statistics</h3>
                         {selectedLog ? (
                             <div>
+                                {/* Class Distribution Chart */}
+                                <div className="mb-4">
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Class Distribution</h4>
+                                    {selectedLog.detections && selectedLog.detections.length > 0 ? (
+                                        <div className="bg-gray-50 p-3 rounded">
+                                            <ClassDistributionChart detections={selectedLog.detections} />
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500">No data available for chart</p>
+                                    )}
+                                </div>
+
                                 <div className="mb-4">
                                     <h4 className="text-sm font-medium text-gray-700 mb-2">Detection Summary</h4>
-                                    {selectedLog.detections && selectedLog.detections.length > 0 ? (
-                                        <div className="space-y-2">
-                                            {selectedLog.detections.map((detection, index) => (
-                                                <div key={index} className="bg-gray-50 p-2 rounded">
-                                                    <p className="text-sm font-medium">{detection.class}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        Confidence: {(detection.confidence * 100).toFixed(1)}%
-                                                    </p>
+                                    {selectedLog?.detections && selectedLog.detections.length > 0 ? (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {Object.entries(getGroupedDetections()).map(([className, detections]) => (
+                                                <div key={className} className="bg-gray-50 p-3 rounded">
+                                                    <p className="text-sm font-medium text-gray-800 mb-1">{className}</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {detections.map((detection, idx) => (
+                                                            <span 
+                                                              key={idx} 
+                                                              onClick={() => navigateToDetectionImage(detection.imageIndex)}
+                                                              className="inline-block bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded cursor-pointer hover:bg-blue-200"
+                                                              title={`Click to view in image ${detection.imageIndex + 1}${
+                                                                selectedLog.images[detection.imageIndex] 
+                                                                  ? ` (${selectedLog.images[detection.imageIndex].split('/').pop() || 'Unknown'})` 
+                                                                  : ''
+                                                              }`}
+                                                            >
+                                                              {(detection.confidence * 100).toFixed(1)}%
+                                                            </span>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

@@ -72,50 +72,70 @@ export default function Prediction() {
     setIsLoading(true);
     
     try {
-      // Create a new log entry
-      const logEntry = {
-        id: Date.now(), // Use timestamp as unique ID
-        images: [], // Will store all processed image URLs
-        timestamp: new Date().toLocaleString(),
-        imageCount: selectedImages.length,
-        detections: [], // Will store all detections
-        annotatedImages: [] // Add this array to store annotated versions
-      };
+      const formData = new FormData();
       
-      // Process each selected image
-      for (const img of selectedImages) {
-        const formData = new FormData();
-        formData.append('file', img.file!);
-        const response = await fetch('http://localhost:8000/predict/', { method: 'POST', body: formData });
+      // เพิ่มรูปภาพลงใน formData
+      for (let i = 0; i < selectedImages.length; i++) {
+        formData.append('files', selectedImages[i].file!);
+      }
+      
+      // ประมวลผลรูปภาพแต่ละรูป และเก็บผลลัพธ์
+      const processingResults = [];
+      
+      for (let imgIndex = 0; imgIndex < selectedImages.length; imgIndex++) {
+        const img = selectedImages[imgIndex];
+        const imgFormData = new FormData();
+        imgFormData.append('file', img.file!);
+        
+        const response = await fetch('http://localhost:8000/predict/', { 
+          method: 'POST', 
+          body: imgFormData 
+        });
         
         if (!response.ok) throw new Error('Prediction failed');
         
         const data = await response.json();
         
-        // Add this image to the log
-        logEntry.images.push(img.previewUrl);
+        // ถ้ามีรูปภาพที่มีการ annotate แล้ว ให้แปลงจาก base64 เป็น Blob และเพิ่มลงใน formData
+        if (data.annotated_image) {
+          const base64Response = await fetch(data.annotated_image);
+          const blob = await base64Response.blob();
+          formData.append(`annotated_${imgIndex}`, blob);
+        }
         
-        // Add the annotated image to the log (if available)
-        logEntry.annotatedImages.push(data.annotated_image || img.previewUrl);
-        
-        // Add detections to the log
-        data.detections.forEach(detection => {
-          logEntry.detections.push(detection);
-        });
-        
-        // Still create individual results for the current page
-        const newResult = {
+        // เก็บผลลัพธ์เพื่อแสดงผลทันที
+        processingResults.push({
           ...data,
-          predictedImage: { previewUrl: img.previewUrl, fileName: img.fileName },
+          imageIndex: imgIndex,
+          predictedImage: { 
+            previewUrl: URL.createObjectURL(img.file!), 
+            fileName: img.fileName 
+          },
           timestamp: new Date().toLocaleString()
-        };
-        
-        setResultsHistory(prev => [newResult as PredictionResult, ...prev]);
+        });
       }
       
-      // Save the log entry to localStorage
-      const existingLogs = JSON.parse(localStorage.getItem('predictionLogs') || '[]');
-      localStorage.setItem('predictionLogs', JSON.stringify([logEntry, ...existingLogs]));
+      // เพิ่มข้อมูล detections ลงใน formData
+      const allDetections = processingResults.flatMap((result, imgIndex) => 
+        result.detections.map(detection => ({
+          ...detection,
+          imageIndex: imgIndex
+        }))
+      );
+      formData.append('detections', JSON.stringify(allDetections));
+      
+      // บันทึกลงฐานข้อมูล
+      const saveResponse = await fetch('/api/predictions', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save prediction data');
+      }
+      
+      // อัปเดตประวัติผลลัพธ์
+      setResultsHistory(prev => [...processingResults, ...prev]);
       
     } catch (error) {
       console.error('Error predicting:', error);

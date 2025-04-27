@@ -20,18 +20,20 @@ enum Role {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String       @unique
-  emailVerified DateTime?
-  password      String
-  image         String?
-  role          Role         @default(USER)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  Prediction    Prediction[]
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  emailVerified  DateTime?
+  password       String
+  image          String?
+  role           Role            @default(USER)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  accounts       Account[]
+  sessions       Session[]
+  Prediction     Prediction[]
+  predictionLogs PredictionLog[]
+  userImages     UserImage[] // เพิ่มบรรทัดนี้
 }
 
 model Account {
@@ -70,4 +72,37 @@ model Prediction {
   detections     Json
   timestamp      DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Log entries for predictions
+model PredictionLog {
+  id         String            @id @default(cuid())
+  userId     String
+  timestamp  DateTime          @default(now())
+  imageCount Int
+  images     PredictionImage[]
+  detections Json // Store all detections
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserImage {
+  id        String   @id @default(cuid())
+  userId    String
+  imageData Bytes // เก็บข้อมูลรูปภาพโดยตรง
+  mimeType  String // เช่น "image/jpeg", "image/png"
+  filename  String
+  isProfile Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PredictionImage {
+  id              String        @id @default(cuid())
+  originalImage   Bytes?        // เปลี่ยนเป็น optional (ใส่ ?)
+  annotatedImage  Bytes?
+  mimeType        String
+  filename        String
+  predictionLogId String
+  predictionLog   PredictionLog @relation(fields: [predictionLogId], references: [id], onDelete: Cascade)
 }
