@@ -8,14 +8,14 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: "signin" | "signup";
-  initialMessage?: string; // Add this line
+  initialMessage?: string;
 }
 
 export default function AuthModal({ 
   isOpen, 
   onClose, 
   initialMode = "signin",
-  initialMessage = "" // Add this line with default
+  initialMessage = ""
 }: AuthModalProps) {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
@@ -26,7 +26,9 @@ export default function AuthModal({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState(initialMessage); // Use initialMessage here
+  const [message, setMessage] = useState(initialMessage);
+  // Add loading state
+  const [loading, setLoading] = useState(false);
 
   // Add this useEffect to handle initialMessage changes
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function AuthModal({
     setPassword("");
     setName("");
     setConfirmPassword("");
+    setLoading(false); // Reset loading state
     onClose();
   };
 
@@ -55,24 +58,27 @@ export default function AuthModal({
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
+    setLoading(true); // Set loading to true when submission starts
+    
     try {
       const result = await signIn("credentials", {
         redirect: false,
         email,
-        password,
+        password
       });
-
+      
       if (result?.error) {
         setError("Invalid email or password. Please check your credentials and try again.");
+        setLoading(false); // Reset loading state on error
         return;
       }
-
+      
       handleClose();
       router.refresh();
     } catch (error) {
       console.error("Sign in error:", error);
-      setError("Something went wrong. Please try again.");
+      setError("An unexpected error occurred. Please try again.");
+      setLoading(false); // Reset loading state on error
     }
   };
 
@@ -80,38 +86,39 @@ export default function AuthModal({
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
+    
+    // Validation
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
-
+    
+    setLoading(true); // Set loading to true when submission starts
+    
     try {
-      const response = await fetch("/api/register", {
-        method: "POST",
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
       });
-
+      
       const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
+        throw new Error(data.message || 'Something went wrong');
       }
-
-      setMode("signin");
-      setMessage("Account created successfully. Please sign in.");
-      setName("");
-      setPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("Failed to create account");
-      }
+      
+      // Redirect to sign in with success message
+      router.push(`/signin?registered=true`);
+    } catch (error: any) {
+      setError(error.message || "An error occurred during registration.");
+      setLoading(false); // Reset loading state on error
     }
   };
 
