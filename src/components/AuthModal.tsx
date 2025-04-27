@@ -2,15 +2,21 @@
 
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: "signin" | "signup";
+  initialMessage?: string; // Add this line
 }
 
-export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: AuthModalProps) {
+export default function AuthModal({ 
+  isOpen, 
+  onClose, 
+  initialMode = "signin",
+  initialMessage = "" // Add this line with default
+}: AuthModalProps) {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   
@@ -20,8 +26,12 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(initialMessage); // Use initialMessage here
+
+  // Add this useEffect to handle initialMessage changes
+  useEffect(() => {
+    setMessage(initialMessage);
+  }, [initialMessage]);
 
   // Switch between sign in and sign up modes
   const toggleMode = () => {
@@ -38,14 +48,12 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
     setPassword("");
     setName("");
     setConfirmPassword("");
-    setLoading(false);
     onClose();
   };
 
   // Handle sign in submission
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     try {
@@ -57,7 +65,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
 
       if (result?.error) {
         setError("Invalid email or password. Please check your credentials and try again.");
-        setLoading(false);
         return;
       }
 
@@ -66,19 +73,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
     } catch (error) {
       console.error("Sign in error:", error);
       setError("Something went wrong. Please try again.");
-      setLoading(false);
     }
   };
 
   // Handle sign up submission
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
-      setLoading(false);
       return;
     }
 
@@ -108,8 +112,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
       } else {
         setError("Failed to create account");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -181,7 +183,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
               <div>
                 <button
                   type="submit"
-                  disabled={loading}
                   className={`w-full py-2 px-4 rounded-md text-white ${
                     loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
                   }`}
@@ -259,7 +260,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
               <div>
                 <button
                   type="submit"
-                  disabled={loading}
                   className={`w-full py-2 px-4 rounded-md text-white ${
                     loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
                   }`}

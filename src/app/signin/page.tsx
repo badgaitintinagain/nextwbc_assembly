@@ -5,27 +5,23 @@ import AuthModal from "@/components/AuthModal";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 
-export default function SignIn() {
+// Extract the component that uses useSearchParams
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [message, setMessage] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(true);
 
   // Check for success message from registration or timeout
-  useEffect(() => {
-    if (searchParams?.get("registered") === "true") {
-      setMessage("Account created successfully. Please sign in.");
-      setIsModalOpen(true);
-    } else if (searchParams?.get("timeout") === "true") {
-      setMessage("Your session has expired due to inactivity. Please sign in again.");
-      setIsModalOpen(true);
-    } else {
-      // Open modal automatically on page visit
-      setIsModalOpen(true);
-    }
-  }, [searchParams]);
+  const registered = searchParams?.get("registered") === "true";
+  const timeout = searchParams?.get("timeout") === "true";
+  
+  const message = registered 
+    ? "Account created successfully. Please sign in."
+    : timeout 
+      ? "Your session has expired due to inactivity. Please sign in again."
+      : "";
 
   const handleModalClose = () => {
     setIsModalOpen(false);
@@ -34,15 +30,30 @@ export default function SignIn() {
   };
 
   return (
+    <div className="min-h-[calc(100vh-130px)] bg-gray-50">
+      <AuthModal 
+        isOpen={isModalOpen} 
+        onClose={handleModalClose} 
+        initialMode="signin" 
+        initialMessage={message}
+      />
+    </div>
+  );
+}
+
+export default function SignIn() {
+  return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-130px)] bg-gray-50">
-        <AuthModal 
-          isOpen={isModalOpen} 
-          onClose={handleModalClose} 
-          initialMode="signin" 
-        />
-      </div>
+      <Suspense fallback={
+        <div className="min-h-[calc(100vh-130px)] bg-gray-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg shadow-md">
+            <p className="text-center">Loading sign in...</p>
+          </div>
+        </div>
+      }>
+        <SignInContent />
+      </Suspense>
       <Footer />
     </>
   );
