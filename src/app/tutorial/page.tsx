@@ -9,7 +9,7 @@ export default function EditProfile() {
         <div className="grid grid-cols-5 grid-rows-5 gap-1">
             <div className="row-span-5">
                 <p className="text-black">
-                    Tutorial
+                    Tutorialja
                 </p>
             </div>
         </div>
