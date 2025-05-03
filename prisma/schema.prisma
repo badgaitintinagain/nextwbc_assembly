@@ -12,10 +12,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // Add the following line to improve connection handling in serverless environments
-  connectionTimeoutMillis = 5000
-  // Add the following to optimize for serverless
-  poolTimeout = 20
+  // Serverless environments optimization - connection settings managed in client code
 }
 
 enum Role {

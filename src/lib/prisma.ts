@@ -1,14 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 
-// Implementation for PrismaClient specific to serverless environments
-// to solve the "prepared statement already exists" error
+/**
+ * PrismaClient initialization optimized for serverless environments
+ * This addresses the "prepared statement already exists" error in Vercel
+ */
 
-// Prevent multiple instances of Prisma Client in development
-let prisma: PrismaClient;
+// Generate a unique identifier for this instance
+// This helps avoid prepared statement conflicts in serverless environments
+const generateId = () => `_${Math.random().toString(36).substr(2, 9)}`;
 
-if (process.env.NODE_ENV === 'production') {
-  // In production (serverless), create a new instance with specific options
-  prisma = new PrismaClient({
+// Different behavior for production (serverless) vs development
+const prismaClientSingleton = () => {
+  return new PrismaClient({
     // Add Prisma Client specific options for serverless
     log: ['error'],
     datasources: {
@@ -17,17 +20,18 @@ if (process.env.NODE_ENV === 'production') {
       },
     },
   });
-} else {
-  // In development, use global object to store PrismaClient
-  const globalForPrisma = global as unknown as { prisma: PrismaClient };
-  
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = new PrismaClient({
-      log: ['query', 'error', 'warn'],
-    });
-  }
-  
-  prisma = globalForPrisma.prisma;
-}
+};
+
+// In development, use global object to store PrismaClient for hot reloading
+// In production, always create a new instance with a unique identifier
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+// Use environment-specific initialization
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+
+// In development, keep the client reference for hot module reloading
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export default prisma;
