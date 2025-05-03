@@ -1,76 +1,95 @@
-import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from '@/app/api/auth/authOptions';
+import { supabase } from '@/lib/supabase';
+import { getServerSession } from 'next-auth';
+import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  
+export async function GET(request) {
   try {
+    // ตรวจสอบการล็อกอิน
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'คุณไม่ได้ล็อกอิน' }, { status: 401 });
+    }
+
+    // ดึงข้อมูลรูปภาพของผู้ใช้
+    const { data, error } = await supabase
+      .from('user_images')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching images:', error);
+      return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลรูปภาพ' }, { status: 500 });
+    }
+
+    return NextResponse.json({ images: data });
+  } catch (e) {
+    console.error('Error in GET images:', e);
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาดบนเซิร์ฟเวอร์' }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  try {
+    // ตรวจสอบการล็อกอิน
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'คุณไม่ได้ล็อกอิน' }, { status: 401 });
+    }
+
+    // รับข้อมูล FormData จาก request
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const isProfile = formData.get('isProfile') === 'true';
+    const imageFile = formData.get('image');
+    const description = formData.get('description') || '';
     
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    if (!imageFile) {
+      return NextResponse.json({ error: 'ไม่มีไฟล์รูปภาพ' }, { status: 400 });
     }
+
+    // สร้างชื่อไฟล์ที่ไม่ซ้ำกัน
+    const fileName = `${session.user.id}_${Date.now()}_${imageFile.name}`;
     
-    // ค้นหาข้อมูลผู้ใช้
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    });
-    
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-    
-    // อ่านข้อมูลไฟล์เป็น ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    // ถ้าเป็นรูปโปรไฟล์ ให้ยกเลิกการตั้งค่ารูปอื่นเป็นรูปโปรไฟล์
-    if (isProfile) {
-      await prisma.userImage.updateMany({
-        where: { 
-          userId: user.id,
-          isProfile: true 
-        },
-        data: { isProfile: false }
+    // อัปโหลดไฟล์ไปยัง Supabase Storage
+    const { data: fileData, error: fileError } = await supabase
+      .storage
+      .from('user-images')
+      .upload(fileName, imageFile, {
+        cacheControl: '3600',
+        upsert: false
       });
+
+    if (fileError) {
+      console.error('Error uploading file:', fileError);
+      return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์' }, { status: 500 });
     }
-    
-    // บันทึกข้อมูลรูปภาพ
-    const userImage = await prisma.userImage.create({
-      data: {
-        userId: user.id,
-        imageData: buffer,
-        mimeType: file.type,
-        filename: file.name,
-        isProfile
-      }
-    });
-    
-    // ถ้าเป็นรูปโปรไฟล์ อัปเดต user.image ด้วย
-    if (isProfile) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { image: `/api/user/images/${userImage.id}` } // URL สำหรับดึงรูปภาพ
-      });
+
+    // สร้าง URL สาธารณะ
+    const { data: publicUrl } = supabase
+      .storage
+      .from('user-images')
+      .getPublicUrl(fileName);
+
+    // บันทึกข้อมูลลงในฐานข้อมูล
+    const { data, error } = await supabase
+      .from('user_images')
+      .insert([{
+        user_id: session.user.id,
+        file_path: fileName,
+        url: publicUrl.publicUrl,
+        description,
+        created_at: new Date().toISOString()
+      }])
+      .select();
+
+    if (error) {
+      console.error('Error saving image data:', error);
+      return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูลรูปภาพ' }, { status: 500 });
     }
-    
-    return NextResponse.json({
-      id: userImage.id,
-      filename: userImage.filename,
-      isProfile: userImage.isProfile,
-      createdAt: userImage.createdAt
-    });
-    
-  } catch (error) {
-    console.error("Error uploading user image:", error);
-    return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
+
+    return NextResponse.json({ success: true, image: data[0] });
+  } catch (e) {
+    console.error('Error in POST image:', e);
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาดบนเซิร์ฟเวอร์' }, { status: 500 });
   }
 }

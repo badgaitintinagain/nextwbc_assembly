@@ -96,7 +96,7 @@ export default function AuthModal({
     setLoading(true); // Set loading to true when submission starts
     
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

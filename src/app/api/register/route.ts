@@ -31,13 +31,13 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user - using string instead of Role enum
+    // Create user with string value for role
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "USER", // ใช้ string แทน enum
+        role: "USER", // Use string instead of enum reference
       },
     });
 
