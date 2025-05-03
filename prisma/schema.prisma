@@ -5,12 +5,17 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["metrics"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Add the following line to improve connection handling in serverless environments
+  connectionTimeoutMillis = 5000
+  // Add the following to optimize for serverless
+  poolTimeout = 20
 }
 
 enum Role {
