@@ -1,29 +1,42 @@
 import { PrismaClient } from '@prisma/client';
 
-// Prevent multiple instances of Prisma Client in development
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
-
-// Force using DATABASE_URL environment variable for connection
-const prismaClientOptions = {
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
+// For serverless environments - add special handling to avoid prepared statement conflicts
+const createPrismaClient = () => {
+  return new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
     },
-  },
-  // Add options to prevent the "prepared statement already exists" error
-  log: ['error', 'warn'],
+    // Log queries in development
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
 };
 
-// Check if prisma client already exists to prevent duplicate connections
+// Add solution for PrismaClient in serverless environments
+const globalForPrisma = global as unknown as {
+  prisma: PrismaClient | undefined;
+  prismaCreationCount: number;
+};
+
+// Track creation count to help debug multiple instance issues
+if (!globalForPrisma.prismaCreationCount) {
+  globalForPrisma.prismaCreationCount = 0;
+}
+
+// In production (serverless environment), always create a new client to avoid prepared statement conflicts
+// In development, reuse the client to avoid reaching connection limits
 let prisma: PrismaClient;
 
 if (process.env.NODE_ENV === 'production') {
-  // In production, create a new instance each time
-  prisma = new PrismaClient(prismaClientOptions);
+  // In production serverless environment, create a new client for each request
+  prisma = createPrismaClient();
+  globalForPrisma.prismaCreationCount++;
 } else {
-  // In development, reuse the instance if it exists
+  // In development, reuse existing client
   if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = new PrismaClient(prismaClientOptions);
+    globalForPrisma.prisma = createPrismaClient();
+    globalForPrisma.prismaCreationCount++;
   }
   prisma = globalForPrisma.prisma;
 }

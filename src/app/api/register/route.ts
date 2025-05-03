@@ -45,8 +45,14 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Registration error:", error);
+    
+    // Provide more detailed error information in development
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? `Something went wrong: ${error instanceof Error ? error.message : 'Unknown error'}`
+      : "Something went wrong";
+      
     return NextResponse.json(
-      { message: "Something went wrong" },
+      { message: errorMessage },
       { status: 500 }
     );
   }
