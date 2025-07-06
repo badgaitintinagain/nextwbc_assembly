@@ -1,7 +1,6 @@
 'use client';
 
-import { uploadImage } from '@/lib/services/imageService';
-import { getUserProfile, updateUserProfile } from '@/lib/services/userService';
+import { getUserProfile } from '@/lib/services/userService';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 
@@ -60,25 +59,52 @@ export default function EditProfilePage() {
     setMessage('');
 
     try {
-      let avatarUrl = profile.avatarUrl;
+      // ใช้ FormData สำหรับส่งข้อมูลรูปภาพ
+      const formData = new FormData();
       
-      // อัปโหลดรูปภาพใหม่ถ้ามี
+      // เพิ่มข้อมูลทั่วไป
+      formData.append('name', profile.name);
+      formData.append('bio', profile.bio);
+      
+      // เพิ่มรูปภาพถ้ามีการอัปโหลดใหม่
       if (imageFile) {
-        const imageData = await uploadImage(imageFile, 'avatars');
-        avatarUrl = imageData.url;
+        console.log("Adding image file to form data:", imageFile.name);
+        formData.append('avatar', imageFile);
       }
-
-      // อัปเดตข้อมูลผู้ใช้
-      await updateUserProfile(session.user.id, {
-        name: profile.name,
-        bio: profile.bio,
-        avatar_url: avatarUrl
+      
+      // ส่งข้อมูลโปรไฟล์ไปอัปเดต
+      console.log("Updating user profile...");
+      const response = await fetch(`/api/users/${session.user.id}`, {
+        method: 'PATCH',
+        body: formData, // ใช้ FormData แทน JSON
       });
-
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+      
+      const updatedUser = await response.json();
+      console.log("Profile updated successfully:", updatedUser);
+      
+      // อัปเดตข้อมูลโปรไฟล์ในหน้า
+      setProfile({
+        name: updatedUser.name || '',
+        email: updatedUser.email || '',
+        bio: updatedUser.bio || '',
+        avatarUrl: updatedUser.avatarUrl || ''
+      });
+      
+      // รีเซ็ตค่าหลังจากอัปเดตสำเร็จ
+      setImageFile(null);
+      setPreviewUrl('');
       setMessage('อัปเดตโปรไฟล์สำเร็จ');
+      
+      // โหลดข้อมูลใหม่จากเซิร์ฟเวอร์
+      await loadUserProfile();
     } catch (error) {
       console.error('Error updating profile:', error);
-      setMessage('เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์');
+      setMessage(`เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์: ${error.message}`);
     } finally {
       setLoading(false);
     }

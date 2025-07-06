@@ -1,7 +1,7 @@
 "use client"
 
-import AuthModal from "@/components/AuthModal"; // เพิ่ม import
-import { UserIcon } from "lucide-react";
+import AuthModal from "@/components/AuthModal";
+import { Menu, UserIcon, X } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,9 +11,10 @@ import UserProfileDropdown from "./userprofile/userprofiledropdown";
 const Header = () => {
     const { data: session, status } = useSession();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     
-    // เพิ่ม state สำหรับ AuthModal
+    // Add state for AuthModal
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalMode, setAuthModalMode] = useState<"signin" | "signup">("signin");
     
@@ -38,15 +39,17 @@ const Header = () => {
         signOut({ callbackUrl: "/" });
     };
     
-    // เพิ่มฟังก์ชันสำหรับเปิด Modal
+    // Open Modal functions
     const openSignInModal = () => {
         setAuthModalMode("signin");
         setIsAuthModalOpen(true);
+        setMobileMenuOpen(false);
     };
 
     const openSignUpModal = () => {
         setAuthModalMode("signup");
         setIsAuthModalOpen(true);
+        setMobileMenuOpen(false);
     };
     
     // Close dropdown when clicking outside
@@ -63,9 +66,22 @@ const Header = () => {
         };
     }, []);
 
+    // Prevent body scrolling when mobile menu is open
+    useEffect(() => {
+        if (mobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [mobileMenuOpen]);
+
     return (
         <>
-            <header className="bg-white text-black p-3 shadow-sm">
+            <header className="bg-white text-black p-3 shadow-sm z-30 relative">
                 <div className="container mx-auto">
                     <nav className="flex justify-between items-center">
                         {/* Logo */}
@@ -81,8 +97,16 @@ const Header = () => {
                             </Link>
                         </div>
 
-                        {/* Navigation Links */}
-                        <div className="flex items-center space-x-8">
+                        {/* Mobile Menu Button */}
+                        <button 
+                            className="md:hidden flex items-center z-50"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        >
+                            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        </button>
+
+                        {/* Desktop Navigation Links */}
+                        <div className="hidden md:flex items-center space-x-8">
                             <Link href="/" className="hover:text-blue-600 transition">Home</Link>
                             <Link href="/prediction" className="hover:text-blue-600 transition">Prediction</Link>
                             <Link href="/tutorial" className="hover:text-blue-600 transition">Tutorial</Link>
@@ -92,52 +116,116 @@ const Header = () => {
                             )}
                         </div>
 
-                        {/* User Profile or Sign In/Up */}
-                        {isAuthenticated ? (
-                            <div className="w-48 flex items-center justify-end relative" ref={dropdownRef}>
-                                <div 
-                                    className="flex items-center gap-2 cursor-pointer ml-auto"
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                >
-                                    <div className="bg-gray-100 p-2 rounded-full">
-                                        <UserIcon size={18} />
+                        {/* Desktop User Profile or Sign In/Up */}
+                        <div className="hidden md:block">
+                            {isAuthenticated ? (
+                                <div className="w-48 flex items-center justify-end relative" ref={dropdownRef}>
+                                    <div 
+                                        className="flex items-center gap-2 cursor-pointer ml-auto"
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    >
+                                        <div className="bg-gray-100 p-2 rounded-full">
+                                            <UserIcon size={18} />
+                                        </div>
+                                        <div className="text-sm">
+                                            <p className="font-medium">{user.username}</p>
+                                            <p className="text-xs text-gray-500">{user.email}</p>
+                                            <p className="text-xs text-blue-600">{user.role}</p>
+                                        </div>
                                     </div>
-                                    <div className="text-sm">
-                                        <p className="font-medium">{user.username}</p>
-                                        <p className="text-xs text-gray-500">{user.email}</p>
-                                        <p className="text-xs text-blue-600">{user.role}</p>
-                                    </div>
+                                    
+                                    {isDropdownOpen && (
+                                        <UserProfileDropdown 
+                                            user={user} 
+                                            onSignOut={handleSignOut} 
+                                        />
+                                    )}
                                 </div>
-                                
-                                {isDropdownOpen && (
-                                    <UserProfileDropdown 
-                                        user={user} 
-                                        onSignOut={handleSignOut} 
-                                    />
-                                )}
-                            </div>
-                        ) : (
-                            <div className="flex items-center space-x-4">
-                                {/* เปลี่ยนจาก Link เป็น Button ที่เปิด Modal */}
-                                <button 
-                                    onClick={openSignInModal}
-                                    className="text-sm text-gray-600 hover:text-blue-600 transition"
-                                >
-                                    Sign In
-                                </button>
-                                <button 
-                                    onClick={openSignUpModal}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition"
-                                >
-                                    Sign Up
-                                </button>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="flex items-center space-x-4">
+                                    <button 
+                                        onClick={openSignInModal}
+                                        className="text-sm text-gray-600 hover:text-blue-600 transition"
+                                    >
+                                        Sign In
+                                    </button>
+                                    <button 
+                                        onClick={openSignUpModal}
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition"
+                                    >
+                                        Sign Up
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </nav>
+                    
+                    {/* Mobile Menu - Slide down panel with blurred background */}
+                    {mobileMenuOpen && (
+                        <div className="md:hidden mt-2 py-3 border-t border-gray-100 animate-fadeIn bg-white/40 backdrop-blur-sm">
+                            <div className="flex flex-col space-y-3">
+                                <Link href="/" className="hover:text-blue-600 transition py-1">
+                                    Home
+                                </Link>
+                                <Link href="/prediction" className="hover:text-blue-600 transition py-1">
+                                    Prediction
+                                </Link>
+                                <Link href="/tutorial" className="hover:text-blue-600 transition py-1">
+                                    Tutorial
+                                </Link>
+                                <Link href="/vault" className="hover:text-blue-600 transition py-1">
+                                    Vault
+                                </Link>
+                                {user.role === "ADMIN" && (
+                                    <Link href="/admin/dashboard" className="hover:text-blue-600 transition py-1">
+                                        Admin
+                                    </Link>
+                                )}
+                                
+                                {/* Mobile auth buttons */}
+                                <div className="pt-2 border-t border-gray-100 mt-2">
+                                    {isAuthenticated ? (
+                                        <div className="flex flex-col space-y-2">
+                                            <div className="flex items-center gap-2 py-1">
+                                                <div className="bg-gray-100 p-2 rounded-full">
+                                                    <UserIcon size={18} />
+                                                </div>
+                                                <div className="text-sm">
+                                                    <p className="font-medium">{user.username}</p>
+                                                    <p className="text-xs text-gray-500">{user.email}</p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                className="py-1 text-red-600 hover:text-red-800 transition text-left"
+                                                onClick={handleSignOut}
+                                            >
+                                                Sign Out
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col space-y-2">
+                                            <button 
+                                                onClick={openSignInModal}
+                                                className="text-gray-800 hover:text-blue-600 transition py-1 text-left"
+                                            >
+                                                Sign In
+                                            </button>
+                                            <button 
+                                                onClick={openSignUpModal}
+                                                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition w-full text-center"
+                                            >
+                                                Sign Up
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </header>
 
-            {/* เพิ่ม AuthModal Component */}
+            {/* AuthModal Component */}
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}

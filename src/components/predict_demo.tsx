@@ -224,17 +224,17 @@ const PredictDemo = () => {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-md p-4 mt-8 px-4 max-w-5xl mx-auto">
-      <div className="grid grid-cols-5 gap-2">
+    <div className="bg-white rounded-3xl shadow-md p-6 mt-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left side */}
-        <div className="col-span-2 flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           {/* Upload */}
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-4 aspect-square">
-            <h1 className="text-center text-black text-lg">Upload Images Here</h1>
-            <p className="text-center text-black text-xs mb-3">Up to 5 Images per 10 Minutes</p>
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-6 aspect-square">
+            <h1 className="text-center text-black text-xl font-medium mb-2">Upload Images Here</h1>
+            <p className="text-center text-gray-500 text-sm mb-4">Up to 5 Images per 10 Minutes</p>
             
             {uploadLimitReached && (
-              <div className="text-red-500 text-xs text-center mb-2">
+              <div className="text-red-500 text-sm text-center mb-3">
                 Upload limit reached. Please wait {timeUntilReset} before uploading more images.
               </div>
             )}
@@ -247,7 +247,7 @@ const PredictDemo = () => {
               className="hidden" 
             />
             <button 
-              className={`${uploadLimitReached ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded-xl transition`}
+              className={`${uploadLimitReached ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'} text-white px-6 py-3 rounded-xl transition text-base font-medium w-40`}
               onClick={handleUploadClick}
               disabled={uploadLimitReached}
             >
@@ -256,44 +256,47 @@ const PredictDemo = () => {
           </div>
 
           {/* Recent images */}
-          <div className="grid grid-cols-5 gap-1.5">
-            {recentImages.map((img, i) => (
-              <div
-                key={i}
-                className={`flex items-center justify-center border-2 border-dashed rounded-xl p-1 aspect-square cursor-pointer
-                  ${img.file ? 'border-gray-200 hover:border-blue-400' : 'border-gray-200'}
-                  ${selectedImage.fileName === img.fileName ? 'ring-2 ring-blue-500' : ''}
-                `}
-                onClick={() => handleImageSelect(img)}
-              >
-                <img
-                  src={img.previewUrl}
-                  alt={`Image ${i}`}
-                  className="w-full h-full object-cover rounded-md"
-                />
-              </div>
-            ))}
+          <div>
+            <h2 className="text-gray-700 font-medium mb-2 text-sm">Recent Uploads</h2>
+            <div className="grid grid-cols-5 gap-2">
+              {recentImages.map((img, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center justify-center border-2 border-dashed rounded-xl p-1 aspect-square cursor-pointer
+                    ${img.file ? 'border-gray-200 hover:border-blue-400' : 'border-gray-200'}
+                    ${selectedImage.fileName === img.fileName ? 'ring-2 ring-blue-500' : ''}
+                  `}
+                  onClick={() => handleImageSelect(img)}
+                >
+                  <img
+                    src={img.previewUrl}
+                    alt={`Image ${i}`}
+                    className="w-full h-full object-cover rounded-md"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Right side */}
-        <div className="col-span-3 flex flex-col border-dashed border-2 rounded-xl border-gray-200 p-3 aspect-[4/3.2]">
+        <div className="flex flex-col">
           {/* Top bar */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-3 mb-4">
             <button 
-              className={`${isLoading ? 'bg-gray-400' : 'bg-orange-500'} text-white px-4 py-2 rounded-xl hover:${isLoading ? 'bg-gray-400' : 'bg-orange-600'} transition`}
+              className={`${isLoading ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600'} text-white px-6 py-3 rounded-xl transition text-base font-medium min-w-[120px]`}
               onClick={handlePredict}
               disabled={isLoading || !selectedImage.file}
             >
               {isLoading ? 'Processing...' : 'Predict'}
             </button>
-            <div className="bg-gray-100 text-black text-sm px-3 py-2 rounded-xl border border-gray-300 flex-1 truncate">
+            <div className="bg-gray-100 text-black text-sm px-4 py-3 rounded-xl border border-gray-300 flex-1 truncate">
               {selectedImage.fileName}
             </div>
           </div>
 
           {/* Image preview */}
-          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-xl overflow-hidden relative">
+          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-xl overflow-hidden relative min-h-[400px]">
             <img
               src={selectedImage.previewUrl}
               alt="Preview"
@@ -302,7 +305,7 @@ const PredictDemo = () => {
             
             {/* Results overlay */}
             {results && selectedImage.fileName === results.filename && (
-              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-2 text-sm">
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-3 text-sm">
                 <p>Detected: {results.detections.map(d => `${d.class} (${(d.confidence * 100).toFixed(1)}%)`).join(', ')}</p>
               </div>
             )}

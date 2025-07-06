@@ -85,6 +85,8 @@ model PredictionLog {
   images     PredictionImage[]
   detections Json // Store all detections
   user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String?
+  description String?
 }
 
 model UserImage {

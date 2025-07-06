@@ -6,7 +6,7 @@ import PredictDemo from "@/components/predict_demo";
 export default function Home() {
   return (
     <div className="relative flex flex-col min-h-screen">
-      {/* วิดีโอพื้นหลัง */}
+      {/* Background video */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <video
           autoPlay
@@ -18,35 +18,36 @@ export default function Home() {
         </video>
       </div>
 
-      {/* เลเยอร์โปร่งใสสีขาว */}
+      {/* Semi-transparent overlay */}
       <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
 
       {/* main content */}
       <main className="relative z-20 flex flex-col flex-1">
         <Header />
 
-        <div className="flex flex-col items-center justify-center px-8 mt-12">
-          <h1 className="text-white text-4xl">NextWBC</h1>
-          <p className="text-white text-lg text-center mt-4">
+        <div className="flex flex-col items-center justify-center px-4 sm:px-8 mt-8 md:mt-12">
+          <h1 className="text-white text-3xl md:text-4xl text-center">NextWBC</h1>
+          <p className="text-white text-base md:text-lg text-center mt-4 px-2 max-w-3xl">
             High-accuracy white blood cell detection and classification powered by the latest Ultralytics YOLO model.
           </p>
           <CardSlider />
         </div>
 
-        <div className="flex flex-col items-center justify-center px-8">
-          <p className="text-white text-lg text-center mt-4">
+        <div className="flex flex-col items-center justify-center px-4 sm:px-8">
+          <p className="text-white text-base md:text-lg text-center mt-2 md:mt-4">
             Interesting? Try a demo here...
           </p>
         </div>
 
-        <PredictDemo />
-        <div className="mb-4 mt-8">
-          <p className="text-center"> If you like it you can try at Prediction Page</p>
+        <div className="px-4 w-full">
+          <PredictDemo />
+        </div>
+        <div className="mb-4 mt-8 px-4 text-center">
+          <p className="text-white text-sm md:text-base"> If you like it you can try at Prediction Page</p>
         </div>
         <Footer />
       </main>
     </div>
-
   )
 }
 

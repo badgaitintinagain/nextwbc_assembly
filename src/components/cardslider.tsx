@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function CardSlider() {
   const [current, setCurrent] = useState(0);
@@ -34,8 +34,29 @@ export default function CardSlider() {
   }, [cards.length]);
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-8">
-      <div className="flex space-x-4">
+    <div className="flex flex-col items-center justify-center py-8 px-4 md:px-8 w-full">
+      {/* For mobile: Stack vertically and show only the current card */}
+      <div className="md:hidden w-full">
+        <div
+          className="p-4 w-full rounded-2xl flex flex-col items-center text-center text-black bg-white shadow-lg border-4 border-blue-500"
+        >
+          <h2 className="text-xl font-semibold mb-2">{cards[current].title}</h2>
+          <img src={cards[current].image} alt={cards[current].title} className="w-24 h-24 object-cover rounded-lg mb-2" />
+          <p className="text-sm">{cards[current].description}</p>
+        </div>
+        <div className="flex justify-center mt-3 space-x-2">
+          {cards.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrent(index)}
+              className={`w-2 h-2 rounded-full ${current === index ? 'bg-blue-500' : 'bg-gray-300'}`}
+            />
+          ))}
+        </div>
+      </div>
+      
+      {/* For tablet and above: Show all cards side by side */}
+      <div className="hidden md:flex space-x-4">
         {cards.map((card, index) => (
           <div
             key={card.id}
