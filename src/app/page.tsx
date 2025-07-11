@@ -33,11 +33,6 @@ export default function Home() {
           <CardSlider />
         </div>
 
-        <div className="flex flex-col items-center justify-center px-4 sm:px-8">
-          <p className="text-white text-base md:text-lg text-center mt-2 md:mt-4">
-            Interesting? Try a demo here...
-          </p>
-        </div>
 
         <div className="px-4 w-full">
           <PredictDemo />

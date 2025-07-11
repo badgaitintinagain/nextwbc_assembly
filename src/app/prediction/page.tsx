@@ -1,5 +1,4 @@
 "use client"
-import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { API_ENDPOINTS, getBackendUrl } from "@/lib/config";
 import { motion } from 'framer-motion';
@@ -33,6 +32,7 @@ export default function Prediction() {
   const [detailResult, setDetailResult] = useState<PredictionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [resultsHistory, setResultsHistory] = useState<PredictionResult[]>([]);
+  const [showRecent, setShowRecent] = useState(true);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -81,7 +81,7 @@ export default function Prediction() {
       }
       
       // ประมวลผลรูปภาพแต่ละรูป และเก็บผลลัพธ์
-      const processingResults = [];
+      const processingResults: PredictionResult[] = [];
       
       for (let imgIndex = 0; imgIndex < selectedImages.length; imgIndex++) {
         const img = selectedImages[imgIndex];
@@ -118,7 +118,7 @@ export default function Prediction() {
       
       // เพิ่มข้อมูล detections ลงใน formData
       const allDetections = processingResults.flatMap((result, imgIndex) => 
-        result.detections.map(detection => ({
+        result.detections.map((detection: Detection) => ({
           ...detection,
           imageIndex: imgIndex
         }))
@@ -150,7 +150,7 @@ export default function Prediction() {
   };
 
   return (
-    <div className="relative flex flex-col min-h-screen">
+    <div className="relative flex flex-col h-screen overflow-hidden">
       {/* Background video */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <video
@@ -167,12 +167,12 @@ export default function Prediction() {
       <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
 
       {/* main content */}
-      <main className="relative z-20 flex flex-col flex-1">
+      <main className="relative z-20 flex flex-col h-full overflow-hidden">
         <Header />
-        <div className="px-4 py-4 md:py-6 mx-auto max-w-7xl flex-1 overflow-hidden flex flex-col">
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 md:p-5 flex-1 flex flex-col">
-            <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-xl md:text-2xl font-semibold text-gray-800">Image Prediction</h1>
+        <div className="px-6 py-4 mx-auto max-w-7xl flex-1 overflow-hidden flex flex-col min-h-0">
+          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-2xl shadow-2xl p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="mb-3 flex items-center justify-between">
+              <h1 className="text-lg md:text-xl font-semibold text-white-800">Image Prediction</h1>
               <button 
                 className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-colors"
                 onClick={handleViewVault}
@@ -184,12 +184,12 @@ export default function Prediction() {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 flex-1 min-h-0">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 flex-1 min-h-0 overflow-hidden">
               {/* Left Panel - Upload + Image List */}
-              <div className="md:col-span-4 flex flex-col gap-4 h-full overflow-hidden">
+              <div className="md:col-span-4 flex flex-col gap-3 h-full overflow-hidden min-h-0">
                 {/* Upload Image Section */}
                 <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-                  <h2 className="text-gray-800 text-base font-medium mb-3">Upload Images</h2>
+                  <h2 className="text-gray-800 text-sm font-medium mb-3">Upload Images</h2>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -214,7 +214,7 @@ export default function Prediction() {
                 {/* Image List Section - Scrollable */}
                 <div className="border border-gray-200 rounded-lg bg-white shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
                   <div className="p-4 border-b border-gray-200">
-                    <h2 className="text-gray-800 text-base font-medium">Available Images</h2>
+                    <h2 className="text-gray-800 text-sm font-medium">Available Images</h2>
                     <p className="text-xs text-gray-500 mt-1">Select up to 10 images for prediction</p>
                   </div>
                   
@@ -259,153 +259,171 @@ export default function Prediction() {
               </div>
               
               {/* Right Panel - Preview + Results */}
-              <div className="md:col-span-8 flex flex-col gap-4 h-full overflow-hidden">
-                {/* Image Preview + Prediction Controls */}
-                <div className="border border-gray-200 rounded-lg bg-white shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
-                  <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <h2 className="text-gray-800 text-base font-medium">Preview & Prediction</h2>
-                    <button 
-                      className={`${
-                        isLoading 
-                          ? 'bg-gray-400 cursor-not-allowed' 
-                          : selectedImages.length === 0
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-orange-500 hover:bg-orange-600 text-white'
-                      } px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2`}
-                      onClick={handlePredict}
-                      disabled={isLoading || selectedImages.length === 0}
-                    >
-                      {isLoading ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          Run Prediction
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  
-                  {/* Image preview container */}
-                  <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                    {/* Thumbnail selector row (max 10 selectable) */}
-                    {selectedImages.length > 0 && (
-                      <div className="flex gap-1 overflow-x-auto p-2 border-b border-gray-200">
-                        {selectedImages.map((img, idx) => (
-                          <div 
-                            key={idx}
-                            className={`h-16 w-16 flex-shrink-0 rounded overflow-hidden cursor-pointer ${
-                              currentIndex === idx ? 'ring-2 ring-blue-500' : 'border border-gray-200'
-                            }`}
-                            onClick={() => setCurrentIndex(idx)}
-                          >
-                            <img
-                              src={img.previewUrl}
-                              alt={`Thumb ${idx}`}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+              <div className="md:col-span-8 flex flex-col gap-3 h-full min-h-0 max-h-full overflow-hidden">
+                {/* Image Preview + Prediction Controls + Recent Predictions side by side */}
+                <div className="border border-gray-200 rounded-lg bg-white shadow-sm flex flex-row flex-1 min-h-0 max-h-full overflow-hidden gap-4 h-full w-full relative">
+                  {/* Left: Preview + Tray */}
+                  <div className="flex-1 flex flex-col min-h-0 h-full w-full">
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                      <h2 className="text-gray-800 text-sm font-medium">Preview & Prediction</h2>
+                      <button 
+                        className={`${
+                          isLoading 
+                            ? 'bg-gray-400 cursor-not-allowed' 
+                            : selectedImages.length === 0
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-orange-500 hover:bg-orange-600 text-white'
+                        } px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2`}
+                        onClick={handlePredict}
+                        disabled={isLoading || selectedImages.length === 0}
+                      >
+                        {isLoading ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Run Prediction
+                          </>
+                        )}
+                      </button>
+                    </div>
                     
-                    {/* Main preview area */}
-                    <div className="flex-1 flex items-center justify-center p-4 overflow-hidden bg-gray-50">
-                      {selectedImages.length > 0 ? (
-                        <div className="relative max-h-full max-w-full">
-                          <img
-                            src={selectedImages[currentIndex]?.previewUrl}
-                            alt="Preview"
-                            className="max-h-[50vh] w-auto object-contain rounded shadow-md"
-                          />
-                          {/* Results overlay */}
-                          {resultsHistory.length > 0 && selectedImages[currentIndex]?.fileName === resultsHistory[0].filename && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/75 text-white p-2 backdrop-blur-sm">
-                              <p className="text-xs">
-                                Detected: {resultsHistory[0].detections.map((d: Detection) => (
-                                  <span key={d.class} className="inline-block bg-blue-500/30 text-white rounded px-1.5 py-0.5 text-xs m-0.5">
-                                    {d.class} ({(d.confidence * 100).toFixed(1)}%)
-                                  </span>
-                                ))}
-                              </p>
+                    {/* Image preview container */}
+                    <div className="flex-1 flex flex-col bg-gray-50 min-h-0 h-full w-full relative overflow-hidden">
+                      
+                      {/* Main preview area */}
+                      <div className="flex-1 flex flex-col bg-gray-50 min-h-0 h-full w-full relative overflow-hidden">
+                        <div className="flex-1 flex items-center justify-center w-full h-full min-h-0 min-w-0 relative overflow-hidden p-0 m-0">
+                          {selectedImages.length > 0 ? (
+                            <>
+                              {/* Blurred BG */}
+                              <img
+                                src={selectedImages[currentIndex]?.previewUrl}
+                                alt="Preview BG"
+                                className="absolute inset-0 w-full h-full object-cover blur-2xl brightness-50 z-0 select-none pointer-events-none"
+                              />
+                              {/* Main Preview */}
+                              <img
+                                src={selectedImages[currentIndex]?.previewUrl}
+                                alt="Preview"
+                                className="w-full h-full object-contain rounded shadow-md z-10 block"
+                              />
+                            </>
+                          ) : (
+                            <div className="text-center text-gray-500 py-8 px-4 w-full">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <p className="text-sm font-medium">No image selected</p>
+                              <p className="text-xs mt-1">Select an image from the left panel to preview</p>
                             </div>
                           )}
                         </div>
-                      ) : (
-                        <div className="text-center text-gray-500 py-8 px-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <p className="text-sm font-medium">No image selected</p>
-                          <p className="text-xs mt-1">Select an image from the left panel to preview</p>
-                        </div>
-                      )}
+                        {/* Tray thumbnails overlay MacOS style */}
+                        {selectedImages.length > 0 && (
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-20 flex justify-center gap-2 px-4 py-2 bg-white/60 rounded-xl shadow-lg min-h-[52px] border border-white/30 backdrop-blur-md pointer-events-auto" style={{maxWidth:'90%'}}>
+                            {selectedImages.map((img, idx) => (
+                              <div 
+                                key={idx}
+                                className={`h-11 w-11 flex-shrink-0 rounded overflow-hidden cursor-pointer ${
+                                  currentIndex === idx ? 'ring-2 ring-blue-500' : 'border border-gray-200'
+                                }`}
+                                onClick={() => setCurrentIndex(idx)}
+                              >
+                                <img
+                                  src={img.previewUrl}
+                                  alt={`Thumb ${idx}`}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Previous Prediction Results */}
-                <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden flex flex-col">
-                  <div className="p-4 border-b border-gray-200">
-                    <h2 className="text-gray-800 text-base font-medium">Recent Predictions</h2>
-                  </div>
                   
-                  <div className="p-4 overflow-y-auto" style={{ maxHeight: '16rem' }}>
-                    {resultsHistory.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {resultsHistory.map((result, index) => (
-                          <div
-                            key={index}
-                            className="flex bg-gray-50 rounded-lg overflow-hidden border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer"
-                            onClick={() => setDetailResult(result)}
-                          >
-                            <div className="w-20 h-20 flex-shrink-0 bg-gray-200">
-                              <img 
-                                src={result.annotated_image || result.predictedImage.previewUrl} 
-                                alt="Prediction"
-                                className="w-full h-full object-cover"
-                              />
+                  {/* Slide-over Recent Predictions (inside preview section) */}
+                  <div className="absolute inset-0 z-40 pointer-events-none">
+                    <button
+                      className={`absolute right-0 top-1/2 z-50 bg-white/80 border border-white/30 rounded-l-full shadow p-1 flex items-center justify-center transition-all duration-300 ${showRecent ? 'translate-x-0' : 'translate-x-full'}`}
+                      style={{transform: showRecent ? 'translateY(-50%)' : 'translateY(-50%)', pointerEvents:'auto'}}
+                      onClick={() => setShowRecent(v => !v)}
+                      aria-label={showRecent ? 'Hide Recent Predictions' : 'Show Recent Predictions'}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-gray-700 transition-transform duration-300 ${showRecent ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                    <div className={`absolute top-1/2 right-8 z-40 transition-transform duration-300 pointer-events-auto ${showRecent ? 'translate-x-0' : 'translate-x-full'}`} style={{width:'260px', height:'360px', transform: `translateY(-50%) ${showRecent ? '' : 'translateX(100%)'}`}}>
+                      <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl border border-white/30 overflow-hidden flex flex-col h-90">
+                        <div className="p-4 border-b border-white/20 flex items-center justify-between">
+                          <h2 className="text-gray-800 text-sm font-medium">Recent Predictions</h2>
+                          <button className="ml-2 p-1 rounded hover:bg-gray-100" onClick={() => setShowRecent(false)} aria-label="Close Recent Predictions">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="p-3 overflow-y-auto flex-1">
+                          {resultsHistory.length > 0 ? (
+                            <div className="flex flex-col gap-1.5">
+                              {resultsHistory.map((result, index) => (
+                                <div
+                                  key={index}
+                                  className="flex bg-white/80 backdrop-blur-md rounded-lg overflow-hidden border border-white/30 hover:shadow-lg transition-all cursor-pointer shadow-sm"
+                                  onClick={() => setDetailResult(result)}
+                                >
+                                  <div className="w-10 h-10 flex-shrink-0 bg-gray-200/60">
+                                    <img 
+                                      src={result.annotated_image || result.predictedImage.previewUrl} 
+                                      alt="Prediction"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="flex-1 p-2 min-w-0 flex flex-col justify-center">
+                                    <p className="font-medium text-[10px] text-gray-900 truncate">{result.predictedImage.fileName}</p>
+                                    <div className="flex flex-wrap gap-0.5 my-1">
+                                      {result.detections.length > 0 ? (
+                                        result.detections.slice(0, 2).map((d: Detection, i: number) => (
+                                          <span key={`${d.class}-${i}`} className="inline-block bg-blue-100/80 text-blue-800 rounded-full px-1.5 py-0.5 text-[9px] font-medium shadow">
+                                            {d.class} ({(d.confidence * 100).toFixed(1)}%)
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <span className="text-[9px] text-gray-500">No detections</span>
+                                      )}
+                                      {result.detections.length > 2 && (
+                                        <span className="inline-block bg-gray-100/80 text-gray-600 rounded-full px-1.5 py-0.5 text-[9px]">
+                                          +{result.detections.length - 2} more
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[9px] text-gray-500 mt-1">{result.timestamp}</p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            <div className="flex-1 p-3 min-w-0">
-                              <p className="font-medium text-sm text-gray-800 truncate">{result.predictedImage.fileName}</p>
-                              <div className="flex flex-wrap gap-1 my-1">
-                                {result.detections.length > 0 ? (
-                                  result.detections.slice(0, 3).map((d: Detection, i: number) => (
-                                    <span key={`${d.class}-${i}`} className="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs font-medium">
-                                      {d.class} ({(d.confidence * 100).toFixed(1)}%)
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-xs text-gray-500">No detections</span>
-                                )}
-                                {result.detections.length > 3 && (
-                                  <span className="inline-block bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs">
-                                    +{result.detections.length - 3} more
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">{result.timestamp}</p>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-full py-8 text-center space-y-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
+                              <p className="text-sm text-gray-500">No prediction history yet</p>
+                              <p className="text-xs text-gray-400">Results will appear here after prediction</p>
                             </div>
-                          </div>
-                        ))}
+                          )}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full py-8 text-center space-y-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        <p className="text-sm text-gray-500">No prediction history yet</p>
-                        <p className="text-xs text-gray-400">Results will appear here after prediction</p>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -450,7 +468,7 @@ export default function Prediction() {
             </motion.div>
           </div>
         )}
-        <Footer />
+        
       </main>
     </div>
   );

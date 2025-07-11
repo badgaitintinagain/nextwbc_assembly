@@ -1,6 +1,5 @@
 "use client"
 import DistributeGraph from "@/components/distributegraph";
-import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { useEffect, useState } from "react";
 
@@ -9,6 +8,17 @@ interface Detection {
   confidence: number;
   imageIndex: number;
   box?: [number, number, number, number]; // Add box property for bounding box coordinates
+}
+
+interface ImageData {
+  id?: string;
+  originalImage?: string;
+  annotatedImage?: string;
+  mimeType?: string;
+  filename?: string;
+  url?: string;
+  src?: string;
+  path?: string;
 }
 
 // Updated Log interface to match the database structure
@@ -36,7 +46,7 @@ export default function Vault() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showBoundingBoxes, setShowBoundingBoxes] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
 
   // Add state for log management
@@ -69,32 +79,32 @@ export default function Vault() {
         }
         
         // Process the data to ensure images are properly formatted
-        const processedLogs = data.map((log: any) => {
+        const processedLogs = data.map((log: Record<string, unknown>) => {
           try {
             return {
-              id: log.id || `temp-${Date.now()}-${Math.random()}`,
-              userId: log.userId || 'unknown',
-              timestamp: log.timestamp ? new Date(log.timestamp).toLocaleString() : new Date().toLocaleString(),
-              imageCount: log.imageCount || (Array.isArray(log.images) ? log.images.length : 0),
-              title: log.title || '', // Include the title if available
-              description: log.description || '', // Include the description if available
+              id: (log.id as string) || `temp-${Date.now()}-${Math.random()}`,
+              userId: (log.userId as string) || 'unknown',
+              timestamp: (log.timestamp as string) ? new Date(log.timestamp as string).toLocaleString() : new Date().toLocaleString(),
+              imageCount: (log.imageCount as number) || (Array.isArray(log.images) ? (log.images as unknown[]).length : 0),
+              title: (log.title as string) || '', // Include the title if available
+              description: (log.description as string) || '', // Include the description if available
               // Ensure images are properly processed
               images: Array.isArray(log.images) 
-                ? log.images.map((img: any) => ({
-                    id: img.id || `img-${Date.now()}-${Math.random()}`,
-                    originalImage: img.originalImage || null,
-                    annotatedImage: img.annotatedImage || null,
-                    mimeType: img.mimeType || 'image/jpeg',
-                    filename: img.filename || 'image.jpg'
+                ? (log.images as Record<string, unknown>[]).map((img) => ({
+                    id: (img.id as string) || `img-${Date.now()}-${Math.random()}`,
+                    originalImage: (img.originalImage as string) || undefined,
+                    annotatedImage: (img.annotatedImage as string) || undefined,
+                    mimeType: (img.mimeType as string) || 'image/jpeg',
+                    filename: (img.filename as string) || 'image.jpg'
                   }))
                 : [],
-              detections: Array.isArray(log.detections) ? log.detections : []
+              detections: Array.isArray(log.detections) ? (log.detections as Detection[]) : []
             };
           } catch (err) {
             console.error('Error processing log entry:', err, log);
             // Return a minimal valid log entry if processing fails
             return {
-              id: log.id || `error-${Date.now()}`,
+              id: (log.id as string) || `error-${Date.now()}`,
               userId: 'error',
               timestamp: new Date().toLocaleString(),
               imageCount: 0,
@@ -107,9 +117,9 @@ export default function Vault() {
         console.log('Processed logs:', processedLogs); // Debug log to inspect processed data
         setLogs(processedLogs);
         setError(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching prediction logs:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
         setLogs([]); // Ensure logs is always an array even on error
       } finally {
         setIsLoading(false);
@@ -120,7 +130,7 @@ export default function Vault() {
   }, []);
 
   // Helper function to get image URL from potentially object data
-  const getImageUrl = (imageData: any): string | null => {
+  const getImageUrl = (imageData: unknown): string | null => {
     if (!imageData) return null;
     
     try {
@@ -128,19 +138,20 @@ export default function Vault() {
       if (typeof imageData === 'string') return imageData;
       
       // Handle database image objects
-      if (typeof imageData === 'object') {
+      if (typeof imageData === 'object' && imageData !== null) {
+        const imgData = imageData as ImageData;
         // If it's a database image object with original or annotated image data
-        if (imageData.originalImage) {
-          return `data:${imageData.mimeType || 'image/jpeg'};base64,${imageData.originalImage}`;
+        if (imgData.originalImage) {
+          return `data:${imgData.mimeType || 'image/jpeg'};base64,${imgData.originalImage}`;
         }
-        if (imageData.annotatedImage) {
-          return `data:${imageData.mimeType || 'image/jpeg'};base64,${imageData.annotatedImage}`;
+        if (imgData.annotatedImage) {
+          return `data:${imgData.mimeType || 'image/jpeg'};base64,${imgData.annotatedImage}`;
         }
         
         // Legacy format handling
-        if (imageData.url) return imageData.url;
-        if (imageData.src) return imageData.src;
-        if (imageData.path) return imageData.path;
+        if (imgData.url) return imgData.url;
+        if (imgData.src) return imgData.src;
+        if (imgData.path) return imgData.path;
       }
     } catch (err) {
       console.error('Error getting image URL:', err, imageData);
@@ -149,12 +160,15 @@ export default function Vault() {
   };
   
   // Helper function to extract filename from image data
-  const getImageFilename = (imageData: any): string => {
+  const getImageFilename = (imageData: unknown): string => {
     if (!imageData) return 'Unknown';
     
     // If imageData is an object with a filename property
-    if (typeof imageData === 'object' && imageData.filename) {
-      return imageData.filename;
+    if (typeof imageData === 'object' && imageData !== null) {
+      const imgData = imageData as ImageData;
+      if (imgData.filename) {
+        return imgData.filename;
+      }
     }
     
     // Otherwise try to extract from URL
@@ -164,7 +178,7 @@ export default function Vault() {
     
     try {
       return url.split('/').pop() || 'Unknown';
-    } catch (e) {
+    } catch {
       return 'Unknown';
     }
   };
@@ -176,7 +190,7 @@ export default function Vault() {
   };
 
   // เลือกรูปภาพจาก log
-  const handleImageSelect = (image: any) => {
+  const handleImageSelect = (image: unknown) => {
     setSelectedImage(getImageUrl(image));
   };
 
@@ -237,43 +251,7 @@ export default function Vault() {
     setSelectedImage(getImageUrl(targetImage));
   };
 
-  // Render bounding boxes on the image
-  const renderBoundingBoxes = (imgRef: HTMLImageElement) => {
-    if (!imgRef || !showBoundingBoxes) return null;
-    
-    const detections = getCurrentImageDetections();
-    if (detections.length === 0) return null;
-    
-    return detections.map((detection, idx) => {
-      if (!detection.box) {
-        return null;
-      }
-      
-      const [x, y, width, height] = detection.box;
-      const style = {
-        position: 'absolute' as 'absolute',
-        left: `${x * 100}%`,
-        top: `${y * 100}%`,
-        width: `${width * 100}%`,
-        height: `${height * 100}%`,
-        border: `2px solid ${getColorForClass(detection.class)}`,
-        boxSizing: 'border-box' as 'border-box'
-      };
-      
-      return (
-        <div key={idx} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}}>
-          <div style={style}>
-            <div 
-              className="text-white text-xs px-1 py-0.5 absolute top-0 left-0 transform -translate-y-full"
-              style={{ backgroundColor: getColorForClass(detection.class) }}
-            >
-              {detection.class} {(detection.confidence * 100).toFixed(1)}%
-            </div>
-          </div>
-        </div>
-      );
-    });
-  };
+
 
   // Get color for detection class
   const getColorForClass = (className: string) => {
@@ -428,19 +406,19 @@ export default function Vault() {
       <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
 
       {/* main content */}
-      <main className="relative z-20 flex flex-col flex-1">
+      <main className="relative z-20 flex flex-col h-screen">
         <Header />
-        <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 overflow-hidden">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-md p-6 h-full">
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-6 h-full">
+        <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-4 overflow-hidden">
+          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-2xl shadow-2xl p-4 h-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-4 h-full overflow-hidden">
               {/* Column 1: Log List - Takes full width on mobile, 3/12 columns on larger screens */}
-              <div className="md:col-span-1 lg:col-span-3 bg-white/95 rounded-lg border border-gray-100 shadow-sm h-[35vh] md:h-auto overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                  <h3 className="text-base font-semibold text-gray-800">Prediction Logs</h3>
-                  <div className="flex space-x-2">
+              <div className="md:col-span-1 lg:col-span-3 bg-white/90 border border-gray-100 rounded-2xl shadow-md flex flex-col h-full overflow-hidden">
+                <div className="flex items-center justify-between p-3 border-b border-gray-100 flex-shrink-0">
+                  <h3 className="text-sm font-semibold text-gray-800">Prediction Logs</h3>
+                  <div className="flex space-x-1">
                     {/* Edit mode toggle button */}
                     <button
-                      className={`text-xs px-2.5 py-1.5 rounded-md transition-all ${
+                      className={`text-xs px-2 py-1 rounded-md transition-all ${
                         isEditing 
                           ? 'bg-blue-50 text-blue-600 font-medium' 
                           : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
@@ -453,7 +431,7 @@ export default function Vault() {
                     {/* Delete button - only shown in edit mode */}
                     {isEditing && (
                       <button
-                        className={`text-xs px-2.5 py-1.5 rounded-md transition-all ${
+                        className={`text-xs px-2 py-1 rounded-md transition-all ${
                           selectedLogsForDeletion.length > 0
                             ? 'bg-red-50 text-red-600 hover:bg-red-100 font-medium'
                             : 'bg-gray-50 text-gray-400 cursor-not-allowed'
@@ -471,80 +449,74 @@ export default function Vault() {
                   </div>
                 </div>
                 
-                <div className="h-[calc(100%-60px)] overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-2">
                   {logs.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-center p-6 text-gray-500">
+                    <div className="flex items-center justify-center h-full text-center p-4 text-gray-500">
                       {isLoading ? (
                         <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                          <p>Loading Prediction Data...</p>
+                          <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                          <p className="text-sm">Loading...</p>
                         </div>
                       ) : error ? (
                         <div>
-                          <p className="font-medium">Error Loading Data</p>
-                          <p className="text-sm mt-2 text-red-500">{error}</p>
+                          <p className="font-medium text-sm">Error Loading Data</p>
+                          <p className="text-xs mt-1 text-red-500">{error}</p>
                         </div>
                       ) : (
-                        <div className="space-y-3">
-                          <p className="font-medium">No Prediction History</p>
-                          <p className="text-sm mt-2">Create a new prediction to see results here</p>
+                        <div className="space-y-0 h-full p-2">
+                          <p className="font-medium text-sm">No Prediction History</p>
+                          <p className="text-xs mt-1">Create a new prediction to see results here</p>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-0 h-full overflow-y-auto p-4">
+                    <div className="space-y-2">
                       {logs.map((log) => (
                         <div
                           key={log.id}
-                          className={`bg-white border border-gray-100 hover:border-gray-200 rounded-md p-3 mb-3 hover:shadow-sm transition-all cursor-pointer ${
-                            selectedLog?.id === log.id ? 'ring-2 ring-blue-500 border-transparent shadow-sm' : ''
+                          className={`bg-white/90 border border-gray-100 rounded-lg shadow-sm p-2 hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex items-center gap-2 ${
+                            selectedLog?.id === log.id ? 'ring-2 ring-blue-500 border-blue-400 shadow-md' : ''
                           }`}
                           onClick={() => !isEditing && handleLogSelect(log)}
                         >
-                          <div className="flex items-center space-x-3">
-                            {/* Checkbox for selection in edit mode */}
-                            {isEditing && (
-                              <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                                <input
-                                  type="checkbox"
-                                  checked={selectedLogsForDeletion.includes(log.id)}
-                                  onChange={(e) => toggleLogSelection(log.id, e)}
-                                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                />
+                          {/* Checkbox for selection in edit mode */}
+                          {isEditing && (
+                            <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={selectedLogsForDeletion.includes(log.id)}
+                                onChange={(e) => toggleLogSelection(log.id, e as unknown as React.MouseEvent)}
+                                className="w-3 h-3 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-shrink-0 h-12 w-12 bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
+                            {log.images && log.images[0] ? (
+                              <img
+                                src={getImageUrl(log.images[0]) || undefined}
+                                alt="First image"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <span className="text-xs text-gray-500">No image</span>
                               </div>
                             )}
-                            
-                            <div className="flex-shrink-0 h-16 w-16 bg-gray-100 rounded-md overflow-hidden">
-                              {log.images && log.images[0] ? (
-                                <img
-                                  src={getImageUrl(log.images[0]) || undefined}
-                                  alt="First image"
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                  <span className="text-xs text-gray-500">No image</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center">
-                                <p className="text-sm text-gray-800 font-medium truncate">
-                                  {log.title || `Log ${log.timestamp}`}
-                                </p>
-                              </div>
-                              <p className="text-xs text-gray-500 truncate">{log.timestamp}</p>
-                              <div className="flex items-center mt-1 space-x-2">
-                                <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full">
-                                  {log.imageCount} images
+                          </div>
+                          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                            <p className="text-sm text-gray-900 font-semibold truncate">
+                              {log.title || `Log ${log.timestamp}`}
+                            </p>
+                            <p className="text-xs text-gray-600 truncate">{log.timestamp}</p>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-xs px-1.5 py-0.5 bg-gray-100/80 text-gray-700 rounded-full">
+                                {log.imageCount} images
+                              </span>
+                              {log.detections && log.detections.length > 0 && (
+                                <span className="text-xs px-1.5 py-0.5 bg-blue-100/80 text-blue-700 rounded-full">
+                                  {log.detections.length} detections
                                 </span>
-                                {log.detections && log.detections.length > 0 && (
-                                  <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-full">
-                                    {log.detections.length} detections
-                                  </span>
-                                )}
-                              </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -555,28 +527,29 @@ export default function Vault() {
               </div>
               
               {/* Columns 2-3: Image Preview - Takes full width on mobile, 6/12 columns on larger screens */}
-              <div className="md:col-span-2 lg:col-span-6 bg-white/95 rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+              <div className="md:col-span-2 lg:col-span-6 bg-white/90 border border-gray-100 rounded-2xl shadow-md flex flex-col h-full overflow-hidden">
                 {selectedLog ? (
                   <div className="h-full flex flex-col">
-                    <div className="p-4 border-b border-gray-100">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-base font-semibold text-gray-800">
+                    {/* Header - Hidden on mobile to save space */}
+                    <div className="hidden md:block p-3 border-b border-gray-100 flex-shrink-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold text-gray-800 truncate">
                           {selectedLog.title || selectedLog.timestamp}
                         </h3>
                         {/* Edit button with pencil icon */}
                         <button
-                          className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                          className="text-gray-400 hover:text-blue-500 transition-colors p-1 flex-shrink-0"
                           onClick={(e) => openRenameModal(selectedLog, e)}
                           title="Edit title and description"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
                         </button>
                       </div>
                       
                       <div className="flex items-center">
-                        <h4 className="text-sm font-medium text-gray-700">
+                        <h4 className="text-xs font-medium text-gray-700">
                           Image Tray
                         </h4>
                         <div className="ml-auto">
@@ -587,21 +560,22 @@ export default function Vault() {
                               onChange={toggleBoundingBoxes}
                               className="sr-only peer"
                             />
-                            <div className="relative w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
-                            <span className="ml-2 text-xs text-gray-600">Bounding Boxes</span>
+                            <div className="relative w-8 h-4 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500"></div>
+                            <span className="ml-1 text-xs text-gray-600">Bounding Boxes</span>
                           </label>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="px-4 pt-3">
-                      <div className="flex space-x-2 overflow-x-auto p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                    {/* Image Tray - Smaller on mobile */}
+                    <div className="px-2 md:px-3 pt-1 md:pt-2 flex-shrink-0">
+                      <div className="flex space-x-1 overflow-x-auto p-1 md:p-1.5 bg-gray-50 border border-gray-200 rounded-lg">
                         {selectedLog.images && selectedLog.images.map((image, index) => {
                           const imageUrl = getImageUrl(image);
                           return imageUrl ? (
                             <div
                               key={index}
-                              className={`flex-shrink-0 h-20 w-20 rounded-md cursor-pointer overflow-hidden border-2 transition-all ${selectedImage === imageUrl ? 'border-blue-500 shadow' : 'border-transparent hover:border-gray-300'}`}
+                              className={`flex-shrink-0 h-12 w-12 md:h-16 md:w-16 rounded-md cursor-pointer overflow-hidden border-2 transition-all ${selectedImage === imageUrl ? 'border-blue-500 shadow' : 'border-transparent hover:border-gray-300'}`}
                               onClick={() => handleImageSelect(image)}
                             >
                               <img
@@ -612,24 +586,25 @@ export default function Vault() {
                             </div>
                           ) : null;
                         })}
-                        {selectedLog.images && selectedLog.images.length > 10 && (
-                          <div className="flex-shrink-0 h-16 px-3 bg-gray-100 rounded-md flex items-center justify-center">
-                            <span className="text-xs text-gray-600">+{selectedLog.images.length - 10} more</span>
+                        {selectedLog.images && selectedLog.images.length > 6 && (
+                          <div className="flex-shrink-0 h-12 w-12 md:h-16 md:w-16 px-1 md:px-2 bg-gray-100 rounded-md flex items-center justify-center">
+                            <span className="text-xs text-gray-600">+{selectedLog.images.length - 6}</span>
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex-1 p-4 flex flex-col">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Preview</h4>
-                      <div className="flex-1 w-full bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
+                    {/* Preview - Full height on mobile */}
+                    <div className="flex-1 p-1 md:p-3 flex flex-col min-h-0">
+                      <h4 className="hidden md:block text-xs font-medium text-gray-700 mb-1 flex-shrink-0">Preview</h4>
+                      <div className="flex-1 w-full bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 min-h-0">
                         {getDisplayImage() ? (
                           <div className="relative w-full h-full flex items-center justify-center">
                             <img
                               ref={imgRefCallback}
                               src={getDisplayImage() || undefined}
                               alt="Preview"
-                              className="max-w-full max-h-full object-contain p-2"
+                              className="w-full h-full object-contain p-0 md:p-1"
                               onLoad={(e) => {
                                 // Update image reference when image is loaded
                                 if (e.currentTarget) {
@@ -658,13 +633,13 @@ export default function Vault() {
                                   
                                   const [x, y, width, height] = detection.box;
                                   const style = {
-                                    position: 'absolute' as 'absolute',
+                                    position: 'absolute' as const,
                                     left: `${x * 100}%`,
                                     top: `${y * 100}%`,
                                     width: `${width * 100}%`,
                                     height: `${height * 100}%`,
                                     border: `2px solid ${getColorForClass(detection.class)}`,
-                                    boxSizing: 'border-box' as 'border-box'
+                                    boxSizing: 'border-box' as const
                                   };
                                   
                                   return (
@@ -683,146 +658,150 @@ export default function Vault() {
                               </div>
                             )}
                             {showBoundingBoxes && getCurrentImageDetections().length === 0 && (
-                              <div className="absolute bottom-2 right-2 bg-yellow-100 text-yellow-800 text-xs p-1.5 rounded">
+                              <div className="absolute bottom-1 right-1 bg-yellow-100 text-yellow-800 text-xs p-1 rounded">
                                 No bounding box data available
                               </div>
                             )}
                           </div>
                         ) : (
-                          <div className="text-gray-400">No image available</div>
+                          <div className="text-gray-400 text-sm">No image available</div>
                         )}
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-center p-6">
+                  <div className="h-full flex items-center justify-center text-center p-4">
                     <div className="max-w-xs">
-                      <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
                       </svg>
-                      <p className="text-gray-500 font-medium">Select a log to view images</p>
-                      <p className="text-gray-400 text-sm mt-1">Choose a log entry from the list to see detected images</p>
+                      <p className="text-gray-500 font-medium text-sm">Select a log to view images</p>
+                      <p className="text-gray-400 text-xs mt-1">Choose a log entry from the list to see detected images</p>
                     </div>
                   </div>
                 )}
               </div>
               
               {/* Column 4: Statistics and Description - Takes full width on mobile, 3/12 columns on larger screens */}
-              <div className="md:col-span-1 lg:col-span-3 bg-white/95 rounded-lg border border-gray-100 shadow-sm p-4 overflow-y-auto">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Details</h3>
+              <div className="md:col-span-1 lg:col-span-3 bg-white/90 border border-gray-100 rounded-2xl shadow-md flex flex-col h-full overflow-hidden">
+                <div className="p-3 border-b border-gray-100 flex-shrink-0">
+                  <h3 className="text-sm font-semibold text-gray-800">Details</h3>
+                </div>
                 
-                {selectedLog ? (
-                  <div className="space-y-5">
-                    {/* Description Section */}
-                    <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                      <div className="flex items-center justify-between p-3 border-b border-gray-100">
-                        <h4 className="text-sm font-medium text-gray-700">Description</h4>
-                        <button
-                          className="text-gray-400 hover:text-blue-500 transition-colors p-1"
-                          onClick={(e) => openRenameModal(selectedLog, e)}
-                          title="Edit description"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
+                <div className="flex-1 overflow-y-auto p-3">
+                  {selectedLog ? (
+                    <div className="space-y-3">
+                      {/* Description Section */}
+                      <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+                        <div className="flex items-center justify-between p-2 border-b border-gray-100">
+                          <h4 className="text-xs font-medium text-gray-700">Description</h4>
+                          <button
+                            className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                            onClick={(e) => openRenameModal(selectedLog, e)}
+                            title="Edit description"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="p-2">
+                          {selectedLog.description ? (
+                            <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                              {selectedLog.description}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-500 italic">
+                              No description available. Click the edit icon to add one.
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="p-3">
-                        {selectedLog.description ? (
-                          <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                            {selectedLog.description}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-gray-500 italic">
-                            No description available. Click the edit icon to add one.
-                          </p>
-                        )}
+                      
+                      <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+                        <h4 className="text-xs font-medium text-gray-700 p-2 border-b border-gray-100">Class Distribution</h4>
+                        <div className="p-2">
+                          {selectedLog.detections && selectedLog.detections.length > 0 ? (
+                            <div className="bg-gray-50/90 p-2 rounded border border-gray-100">
+                              <DistributeGraph detections={selectedLog.detections} />
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-500 py-1 text-center">No data to display</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-700 p-3 border-b border-gray-100">Class Distribution</h4>
-                      <div className="p-3">
-                        {selectedLog.detections && selectedLog.detections.length > 0 ? (
-                          <div className="bg-gray-50/90 p-3 rounded border border-gray-100">
-                            <DistributeGraph detections={selectedLog.detections} />
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500 py-2 text-center">No data to display</p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-700 p-3 border-b border-gray-100">Detection Summary</h4>
-                      <div className="p-3">
-                        {selectedLog?.detections && selectedLog.detections.length > 0 ? (
-                          <div className="grid grid-cols-1 gap-2">
-                            {Object.entries(
-                              selectedLog.detections.reduce((acc: any, detection) => {
-                                acc[detection.class] = (acc[detection.class] || []).concat(detection);
-                                return acc;
-                              }, {})
-                            ).map(([className, detections]: [string, any]) => (
-                              <div
-                                key={className}
-                                className="bg-blue-50 p-2.5 rounded-lg border border-blue-100"
-                              >
-                                <p className="text-sm font-medium text-gray-800 mb-1.5">{className}</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {detections.map((detection: Detection, idx: number) => (
-                                    <span
-                                      key={idx}
-                                      className="inline-block bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded cursor-pointer hover:bg-blue-200 transition-colors"
-                                      title={`Click to view in image ${detection.imageIndex + 1}${
-                                        selectedLog.images && 
-                                        selectedLog.images[detection.imageIndex] 
-                                          ? ` (${getImageFilename(selectedLog.images[detection.imageIndex])})` 
-                                          : ''
-                                      }`}
-                                      onClick={() => handleConfidenceClick(detection)}
-                                    >
-                                      {(detection.confidence * 100).toFixed(1)}%
-                                    </span>
-                                  ))}
+                      
+                      <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+                        <h4 className="text-xs font-medium text-gray-700 p-2 border-b border-gray-100">Detection Summary</h4>
+                        <div className="p-2">
+                          {selectedLog?.detections && selectedLog.detections.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-1.5">
+                              {Object.entries(
+                                selectedLog.detections.reduce((acc: Record<string, Detection[]>, detection) => {
+                                  acc[detection.class] = (acc[detection.class] || []).concat(detection);
+                                  return acc;
+                                }, {})
+                              ).map(([className, detections]: [string, Detection[]]) => (
+                                <div
+                                  key={className}
+                                  className="bg-blue-50 p-2 rounded border border-blue-100"
+                                >
+                                  <p className="text-xs font-medium text-gray-800 mb-1">{className}</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {detections.map((detection: Detection, idx: number) => (
+                                      <span
+                                        key={idx}
+                                        className="inline-block bg-blue-100 text-blue-700 text-xs px-1 py-0.5 rounded cursor-pointer hover:bg-blue-200 transition-colors"
+                                        title={`Click to view in image ${detection.imageIndex + 1}${
+                                          selectedLog.images && 
+                                          selectedLog.images[detection.imageIndex] 
+                                            ? ` (${getImageFilename(selectedLog.images[detection.imageIndex])})` 
+                                            : ''
+                                        }`}
+                                        onClick={() => handleConfidenceClick(detection)}
+                                      >
+                                        {(detection.confidence * 100).toFixed(1)}%
+                                      </span>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-500 py-1 text-center">No detections available</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+                        <h4 className="text-xs font-medium text-gray-700 p-2 border-b border-gray-100">Log Info</h4>
+                        <div className="p-2 space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-xs text-gray-500">ID:</span>
+                            <span className="text-xs text-gray-700 font-mono">{selectedLog.id.substring(0, 8)}...</span>
                           </div>
-                        ) : (
-                          <p className="text-sm text-gray-500 py-2 text-center">No detections available</p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-700 p-3 border-b border-gray-100">Log Info</h4>
-                      <div className="p-3 space-y-1.5">
-                        <div className="flex justify-between">
-                          <span className="text-xs text-gray-500">ID:</span>
-                          <span className="text-xs text-gray-700 font-mono">{selectedLog.id.substring(0, 8)}...</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-gray-500">Time:</span>
-                          <span className="text-xs text-gray-700">{selectedLog.timestamp}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-gray-500">Images:</span>
-                          <span className="text-xs text-gray-700">{selectedLog.imageCount}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-gray-500">Detections:</span>
-                          <span className="text-xs text-gray-700">{selectedLog.detections?.length || 0}</span>
+                          <div className="flex justify-between">
+                            <span className="text-xs text-gray-500">Time:</span>
+                            <span className="text-xs text-gray-700">{selectedLog.timestamp}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-xs text-gray-500">Images:</span>
+                            <span className="text-xs text-gray-700">{selectedLog.imageCount}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-xs text-gray-500">Detections:</span>
+                            <span className="text-xs text-gray-700">{selectedLog.detections?.length || 0}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center p-6 text-gray-500 bg-gray-50/90 rounded-lg border border-gray-100">
-                    <p className="font-medium">Select a log to view details</p>
-                    <p className="text-sm mt-1 text-gray-400">Description and statistics will appear here</p>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-center p-4 text-gray-500 bg-gray-50/90 rounded-lg border border-gray-100">
+                      <p className="font-medium text-sm">Select a log to view details</p>
+                      <p className="text-xs mt-1 text-gray-400">Description and statistics will appear here</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -908,7 +887,6 @@ export default function Vault() {
           </div>
         )}
         
-        <Footer />
       </main>
     </div>
   );
