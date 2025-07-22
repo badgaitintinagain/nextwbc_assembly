@@ -17,38 +17,62 @@ export async function getUserProfile(userId: string) {
 }
 
 /**
+ * ข้อมูลสำหรับอัปเดตโปรไฟล์
+ */
+export interface UpdateUserProfileData {
+  name?: string;
+  email?: string;
+  password?: string;
+  avatar?: File;
+}
+
+/**
  * อัปเดตข้อมูลโปรไฟล์ของผู้ใช้
  * @param userId ID ของผู้ใช้
  * @param data ข้อมูลที่ต้องการอัปเดต
  * @returns ผลลัพธ์การอัปเดต
  */
-export async function updateUserProfile(userId: string, data: any) {
+export async function updateUserProfile(userId: string, data: UpdateUserProfileData) {
   try {
-    // ใช้ FormData ในการส่งข้อมูล
     const formData = new FormData();
-    
-    // เพิ่มข้อมูลพื้นฐาน
-    formData.append('name', data.name || '');
-    formData.append('bio', data.bio || '');
-    
-    // ถ้ามีไฟล์รูปภาพ
+    if (data.name) formData.append('name', data.name);
+    if (data.email) formData.append('email', data.email);
+    if (data.password) formData.append('password', data.password);
     if (data.avatar && data.avatar instanceof File) {
       formData.append('avatar', data.avatar);
     }
-    
     const response = await fetch(`/api/users/${userId}`, {
       method: 'PATCH',
       body: formData,
     });
-    
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to update profile');
     }
-    
     return await response.json();
   } catch (error) {
     console.error('Error updating user profile:', error);
+    throw error;
+  }
+}
+
+/**
+ * ลบบัญชีผู้ใช้
+ * @param userId ID ของผู้ใช้
+ * @returns ผลลัพธ์การลบ
+ */
+export async function deleteUser(userId: string) {
+  try {
+    const response = await fetch(`/api/users/${userId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete user');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting user:', error);
     throw error;
   }
 }

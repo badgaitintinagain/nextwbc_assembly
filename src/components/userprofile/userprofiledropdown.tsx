@@ -91,7 +91,6 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ user, onSignO
         <UserProfilePopup 
           user={user} 
           onClose={() => setShowProfilePopup(false)} 
-          onSave={handleSaveProfile} 
         />
       )}
     </>

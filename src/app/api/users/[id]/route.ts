@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import bcrypt from 'bcrypt';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 import { authOptions } from '../../auth/[...nextauth]/route';
@@ -17,7 +18,7 @@ export async function GET(
     const userId = params.id;
 
     // ตรวจสอบว่าเป็นการขอข้อมูลของตัวเองหรือไม่
-    if (session.user.id !== userId && session.user.role !== 'ADMIN') {
+    if ((session.user as unknown as { id: string; role: string }).id !== userId && (session.user as unknown as { id: string; role: string }).role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -28,7 +29,6 @@ export async function GET(
         id: true,
         name: true,
         email: true,
-        bio: true,
         role: true,
         createdAt: true,
         userImages: {
@@ -42,7 +42,7 @@ export async function GET(
           take: 1
         }
       },
-    });
+    }) as (typeof prisma.user & { userImages: Array<{ id: string; mimeType: string; filename: string; imageData: Buffer }> }) | null;
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -61,7 +61,6 @@ export async function GET(
       id: user.id,
       name: user.name,
       email: user.email,
-      bio: user.bio,
       role: user.role,
       createdAt: user.createdAt,
       avatar_url: avatarUrl
@@ -76,43 +75,28 @@ export async function GET(
 }
 
 // ฟังก์ชันสำหรับอัปเดตข้อมูลผู้ใช้
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
-    console.log("User update API called");
-    
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const userId = params.id;
-
-    // ตรวจสอบว่าเป็นการอัปเดตของตัวเองหรือไม่
-    if (session.user.id !== userId && session.user.role !== 'ADMIN') {
+    if ((session.user as unknown as { id: string; role: string }).id !== userId && (session.user as unknown as { id: string; role: string }).role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-
-    // รับข้อมูลจาก formData
     const formData = await request.formData();
     const name = formData.get('name') as string;
-    const bio = formData.get('bio') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
     const avatarFile = formData.get('avatar') as File;
-
-    console.log(`Updating user ${userId} - Name: ${name}, Bio length: ${bio?.length || 0}`);
-    if (avatarFile) {
-      console.log(`New avatar file: ${avatarFile.name}, size: ${avatarFile.size}, type: ${avatarFile.type}`);
+    const updateData: any = {};
+    if (name && name.trim() !== '') updateData.name = name;
+    if (email && email.trim() !== '') updateData.email = email;
+    if (password && password.trim() !== '') {
+      const hashed = await bcrypt.hash(password, 10);
+      updateData.password = hashed;
     }
-
-    // เตรียมข้อมูลสำหรับอัปเดตผู้ใช้
-    const updateData: any = {
-      name,
-      bio
-    };
-
-    // อัปเดตข้อมูลผู้ใช้
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
@@ -120,25 +104,13 @@ export async function PATCH(
         id: true,
         name: true,
         email: true,
-        bio: true,
+        role: true,
       },
     });
-
-    // ถ้ามีการอัปโหลดรูปโปรไฟล์ใหม่
     let avatarUrl = '';
     if (avatarFile) {
-      // ลบรูปโปรไฟล์เก่า (ถ้ามี)
-      await prisma.userImage.deleteMany({
-        where: {
-          userId: userId,
-          isProfile: true
-        }
-      });
-
-      // อ่านข้อมูลไฟล์
+      await prisma.userImage.deleteMany({ where: { userId: userId, isProfile: true } });
       const buffer = Buffer.from(await avatarFile.arrayBuffer());
-      
-      // บันทึกรูปโปรไฟล์ใหม่
       const newProfileImage = await prisma.userImage.create({
         data: {
           userId: userId,
@@ -148,34 +120,19 @@ export async function PATCH(
           isProfile: true
         }
       });
-      
-      // แปลงเป็น data URL สำหรับส่งกลับไปที่ client
       avatarUrl = `data:${newProfileImage.mimeType};base64,${buffer.toString('base64')}`;
-      console.log("New profile image saved to database");
     } else {
-      // ถ้าไม่มีการอัปโหลดรูปใหม่ ให้ดึงรูปเก่า (ถ้ามี)
-      const existingImage = await prisma.userImage.findFirst({
-        where: {
-          userId: userId,
-          isProfile: true
-        }
-      });
-      
+      const existingImage = await prisma.userImage.findFirst({ where: { userId: userId, isProfile: true } });
       if (existingImage) {
         avatarUrl = `data:${existingImage.mimeType};base64,${Buffer.from(existingImage.imageData).toString('base64')}`;
       }
     }
-
-    // ส่งข้อมูลกลับพร้อม URL ของรูปโปรไฟล์
-    return NextResponse.json({
-      ...updatedUser,
-      avatarUrl
-    });
-  } catch (error) {
+    return NextResponse.json({ ...updatedUser, avatarUrl });
+  } catch (error: unknown) {
     console.error('Error updating user:', error);
-    return NextResponse.json(
-      { error: `Failed to update user data: ${error.message}` },
-      { status: 500 }
-    );
+    if (error instanceof Error) {
+      return NextResponse.json({ error: `Failed to update user data: ${error.message}` }, { status: 500 });
+    }
+    return NextResponse.json({ error: 'Failed to update user data' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import AuthModal from "@/components/AuthModal";
+import { getUserProfile } from '@/lib/services/userService';
 import { Menu, UserIcon, X } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
@@ -13,6 +14,7 @@ const Header = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [profile, setProfile] = useState<{ avatar_url?: string, name?: string, email?: string, role?: string } | null>(null);
     
     // Add state for AuthModal
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -22,13 +24,21 @@ const Header = () => {
     console.log("Session status:", status);
     console.log("Session data:", session);
     
+    useEffect(() => {
+        const userId = (session?.user as { id?: string })?.id;
+        if (status === 'authenticated' && userId) {
+            getUserProfile(userId).then(setProfile);
+        }
+    }, [status, session]);
+
     const isAuthenticated = status === "authenticated";
     
     // Use actual user data if authenticated, mock data otherwise
     const user = isAuthenticated ? {
-        username: session?.user?.name || "User",
-        email: session?.user?.email || "",
-        role: session?.user?.role || "USER"
+        username: profile?.name || session?.user?.name || "User",
+        email: profile?.email || session?.user?.email || "",
+        role: profile?.role || session?.user?.role || "USER",
+        profileImage: profile?.avatar_url || undefined
     } : {
         username: "Guest",
         email: "",
@@ -125,7 +135,11 @@ const Header = () => {
                                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                     >
                                         <div className="bg-gray-100 p-1.5 rounded-full">
-                                            <UserIcon size={16} />
+                                            {user.profileImage ? (
+                                                <img src={user.profileImage} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
+                                            ) : (
+                                                <UserIcon size={16} />
+                                            )}
                                         </div>
                                         <div className="text-xs">
                                             <p className="font-medium">{user.username}</p>
