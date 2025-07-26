@@ -1,6 +1,8 @@
 "use client"
 import CellDistributionTable from "@/components/distributegraph";
 import Header from "@/components/header";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface Detection {
@@ -40,6 +42,10 @@ interface Log {
 }
 
 export default function Vault() {
+  // Authentication check
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   // State สำหรับ logs, selected log และ image
   const [logs, setLogs] = useState<Log[]>([]);
   const [selectedLog, setSelectedLog] = useState<Log | null>(null);
@@ -58,9 +64,25 @@ export default function Vault() {
   const [newLogDescription, setNewLogDescription] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
+  // Authentication check effect
+  useEffect(() => {
+    if (status === "loading") return; // Still loading session
+    
+    if (status === "unauthenticated") {
+      // Redirect to sign-in page with callback URL
+      router.push(`/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
+      return;
+    }
+  }, [status, router]);
+
   // ดึงข้อมูล logs จาก database
   useEffect(() => {
     const fetchLogs = async () => {
+      // Only fetch if authenticated
+      if (status !== "authenticated" || !session) {
+        return;
+      }
+
       try {
         setIsLoading(true);
         const response = await fetch('/api/predictions');
@@ -135,7 +157,46 @@ export default function Vault() {
     };
     
     fetchLogs();
-  }, []);
+  }, [session, status]); // เพิ่ม session และ status เป็น dependencies
+
+  // Show loading screen while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="relative flex flex-col min-h-screen">
+        {/* Background video */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <video
+            autoPlay
+            loop
+            muted
+            className="fixed top-0 left-0 w-full h-full object-cover object-center blur-md brightness-50"
+          >
+            <source src="/shortvid/gradient_loop.mp4" type="video/mp4" />
+          </video>
+        </div>
+
+        {/* Semi-transparent overlay */}
+        <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
+
+        {/* Loading content */}
+        <main className="relative z-20 flex flex-col h-screen">
+          <Header />
+          <div className="flex-1 flex items-center justify-center">
+            <div className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl p-8 text-center">
+              <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-white text-lg font-medium">Loading...</p>
+              <p className="text-white/80 text-sm mt-2">Checking authentication</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Don't render main content if not authenticated (will redirect)
+  if (status === "unauthenticated") {
+    return null;
+  }
 
   // Helper function to get image URL from potentially object data
   const getImageUrl = (imageData: unknown): string | null => {
@@ -435,11 +496,11 @@ export default function Vault() {
       {/* main content */}
       <main className="relative z-20 flex flex-col h-screen">
         <Header />
-        <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-4 overflow-hidden">
-          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl p-4 h-full">
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-4 h-full overflow-hidden">
+        <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-4 overflow-auto lg:overflow-hidden lg:h-full lg:flex lg:flex-col">
+          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl p-4 min-h-full lg:flex-1 lg:flex lg:flex-col lg:min-h-0">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0 lg:flex-1 lg:h-full">
               {/* Column 1: Log List - Takes full width on mobile, 3/12 columns on larger screens */}
-              <div className="md:col-span-1 lg:col-span-3 bg-white/90 border border-gray-100 rounded-l-2xl shadow-md flex flex-col h-full overflow-hidden">
+              <div className="lg:col-span-3 bg-white/90 border border-gray-100 rounded-xl lg:rounded-l-2xl shadow-md flex flex-col h-80 lg:h-full overflow-hidden">
                 <div className="flex items-center justify-between p-3 border-b border-gray-100 flex-shrink-0">
                   <h3 className="text-sm font-semibold text-gray-800">Prediction Logs</h3>
                   <div className="flex space-x-1">
@@ -554,15 +615,29 @@ export default function Vault() {
               </div>
               
               {/* Columns 2-3: Image Preview - Takes full width on mobile, 6/12 columns on larger screens */}
-              <div className="md:col-span-2 lg:col-span-6 bg-white/90 border border-gray-100 shadow-md flex flex-col h-full overflow-hidden">
+              <div className="lg:col-span-6 bg-white/90 border border-gray-100 rounded-xl shadow-md flex flex-col h-80 lg:h-full overflow-hidden">
                 {selectedLog ? (
                   <div className="h-full flex flex-col">
-                    {/* Header - Hidden on mobile to save space */}
-                    <div className="hidden md:block p-3 border-b border-gray-100 flex-shrink-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-semibold text-gray-800 truncate">
-                          {selectedLog.title || selectedLog.timestamp}
-                        </h3>
+                    {/* Header - Always visible on mobile now */}
+                    <div className="p-2 lg:p-3 border-b border-gray-100 flex-shrink-0">
+                      <div className="flex items-center justify-between mb-1 lg:mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-gray-800 truncate">
+                            {selectedLog.title || selectedLog.timestamp}
+                          </h3>
+                          <div className="lg:hidden mt-1">
+                            <label className="inline-flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={showBoundingBoxes}
+                                onChange={toggleBoundingBoxes}
+                                className="sr-only peer"
+                              />
+                              <div className="relative w-8 h-4 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500"></div>
+                              <span className="ml-1 text-xs text-gray-600">Bounding Boxes</span>
+                            </label>
+                          </div>
+                        </div>
                         {/* Edit button with pencil icon */}
                         <button
                           className="text-gray-400 hover:text-blue-500 transition-colors p-1 flex-shrink-0"
@@ -575,7 +650,7 @@ export default function Vault() {
                         </button>
                       </div>
                       
-                      <div className="flex items-center">
+                      <div className="hidden lg:flex items-center">
                         <h4 className="text-xs font-medium text-gray-700">
                           Image Tray
                         </h4>
@@ -594,15 +669,15 @@ export default function Vault() {
                       </div>
                     </div>
                     
-                    {/* Image Tray - Smaller on mobile */}
-                    <div className="px-2 md:px-3 pt-1 md:pt-2 flex-shrink-0">
-                      <div className="flex space-x-1 overflow-x-auto p-1 md:p-1.5 bg-gray-50 border border-gray-200 rounded-lg">
+                    {/* Image Tray - Responsive sizing */}
+                    <div className="px-2 lg:px-3 py-0.5 lg:py-1 flex-shrink-0">
+                      <div className="flex space-x-1 overflow-x-auto p-1 lg:p-1.5 bg-gray-50 border border-gray-200 rounded-lg">
                         {selectedLog.images && selectedLog.images.map((image, index) => {
                           const imageUrl = getImageUrl(image);
                           return imageUrl ? (
                             <div
                               key={index}
-                              className={`flex-shrink-0 h-12 w-12 md:h-16 md:w-16 rounded-md cursor-pointer overflow-hidden border-2 transition-all ${selectedImage === imageUrl ? 'border-blue-500 shadow' : 'border-transparent hover:border-gray-300'}`}
+                              className={`flex-shrink-0 h-14 w-14 lg:h-16 lg:w-16 rounded-md cursor-pointer overflow-hidden border-2 transition-all ${selectedImage === imageUrl ? 'border-blue-500 shadow' : 'border-transparent hover:border-gray-300'}`}
                               onClick={() => handleImageSelect(image)}
                             >
                               <img
@@ -614,24 +689,36 @@ export default function Vault() {
                           ) : null;
                         })}
                         {selectedLog.images && selectedLog.images.length > 6 && (
-                          <div className="flex-shrink-0 h-12 w-12 md:h-16 md:w-16 px-1 md:px-2 bg-gray-100 rounded-md flex items-center justify-center">
+                          <div className="flex-shrink-0 h-14 w-14 lg:h-16 lg:w-16 px-1 lg:px-2 bg-gray-100 rounded-md flex items-center justify-center">
                             <span className="text-xs text-gray-600">+{selectedLog.images.length - 6}</span>
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    {/* Preview - Full height on mobile */}
-                    <div className="flex-1 p-1 md:p-3 flex flex-col min-h-0">
-                      <h4 className="hidden md:block text-xs font-medium text-gray-700 mb-1 flex-shrink-0">Preview</h4>
-                      <div className="flex-1 w-full bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 min-h-0">
+                    {/* Preview - Responsive sizing */}
+                    <div className="flex-1 p-0.5 lg:p-1 flex flex-col min-h-0">
+                      <h4 className="hidden lg:block text-xs font-medium text-gray-700 mb-0.5 flex-shrink-0">Preview</h4>
+                      <div className="flex-1 w-full bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 min-h-0 relative">
+                        {/* Background image with liquid glass effect */}
+                        {getDisplayImage() && (
+                          <div className="absolute inset-0">
+                            <img
+                              src={getDisplayImage() || undefined}
+                              alt="Background"
+                              className="w-full h-full object-cover opacity-60 blur-lg scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-white/15 backdrop-blur-xs"></div>
+                          </div>
+                        )}
+                        
                         {getDisplayImage() ? (
-                          <div className="relative w-full h-full flex items-center justify-center">
+                          <div className="relative w-full h-full flex items-center justify-center z-10">
                             <img
                               ref={imgRefCallback}
                               src={getDisplayImage() || undefined}
                               alt="Preview"
-                              className="w-full h-full object-contain p-0 md:p-1"
+                              className="w-full h-full object-contain drop-shadow-lg"
                               onLoad={(e) => {
                                 // Update image reference when image is loaded
                                 if (e.currentTarget) {
@@ -691,7 +778,7 @@ export default function Vault() {
                             )}
                           </div>
                         ) : (
-                          <div className="text-gray-400 text-sm">No image available</div>
+                          <div className="text-gray-400 text-sm z-10 relative">No image available</div>
                         )}
                       </div>
                     </div>
@@ -710,7 +797,7 @@ export default function Vault() {
               </div>
               
               {/* Column 4: Statistics and Description - Takes full width on mobile, 3/12 columns on larger screens */}
-              <div className="md:col-span-1 lg:col-span-3 bg-white/90 border border-gray-100 rounded-r-2xl shadow-md flex flex-col h-full overflow-hidden">
+              <div className="lg:col-span-3 bg-white/90 border border-gray-100 rounded-xl lg:rounded-r-2xl shadow-md flex flex-col h-80 lg:h-full overflow-hidden">
                 <div className="p-3 border-b border-gray-100 flex-shrink-0">
                   <h3 className="text-sm font-semibold text-gray-800">Details</h3>
                 </div>

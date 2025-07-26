@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = !!token;
 
   // Define protected paths
-  const protectedPaths = ["/prediction"];
+  const protectedPaths = ["/prediction", "/vault"];
   const adminPaths = ["/admin"];
   const authPaths = ["/signin", "/signup"];
   const currentPath = request.nextUrl.pathname;
@@ -59,6 +59,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/prediction/:path*",
+    "/vault/:path*",
     "/profile/:path*",
     "/admin/:path*",
     "/signin",

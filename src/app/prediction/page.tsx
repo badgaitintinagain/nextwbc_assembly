@@ -150,7 +150,7 @@ export default function Prediction() {
   };
 
   return (
-    <div className="relative flex flex-col h-screen overflow-hidden">
+    <div className="relative flex flex-col min-h-screen md:h-screen md:overflow-hidden">
       {/* Background video */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <video
@@ -167,10 +167,10 @@ export default function Prediction() {
       <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
 
       {/* main content */}
-      <main className="relative z-20 flex flex-col h-full overflow-hidden">
+      <main className="relative z-20 flex flex-col min-h-full md:h-full md:overflow-hidden">
         <Header />
-        <div className="px-6 py-4 mx-auto max-w-7xl flex-1 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-2xl shadow-2xl p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="px-6 py-4 mx-auto max-w-7xl flex-1 md:overflow-hidden flex flex-col md:min-h-0">
+          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-2xl shadow-2xl p-4 flex-1 flex flex-col md:min-h-0 md:overflow-hidden">
             <div className="mb-3 flex items-center justify-between">
               <h1 className="text-lg md:text-xl font-semibold text-white-800">Image Prediction</h1>
               <button 
@@ -184,9 +184,9 @@ export default function Prediction() {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 flex-1 min-h-0 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 flex-1 md:min-h-0 md:overflow-hidden">
               {/* Left Panel - Upload + Image List */}
-              <div className="md:col-span-4 flex flex-col gap-3 h-full overflow-hidden min-h-0">
+              <div className="md:col-span-4 flex flex-col gap-3 md:h-full md:overflow-hidden md:min-h-0">
                 {/* Upload Image Section */}
                 <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
                   <h2 className="text-gray-800 text-sm font-medium mb-3">Upload Images</h2>
@@ -212,13 +212,13 @@ export default function Prediction() {
                 </div>
                 
                 {/* Image List Section - Scrollable */}
-                <div className="border border-gray-200 rounded-lg bg-white shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="border border-gray-200 rounded-lg bg-white shadow-sm flex-1 flex flex-col md:min-h-0 md:overflow-hidden">
                   <div className="p-4 border-b border-gray-200">
                     <h2 className="text-gray-800 text-sm font-medium">Available Images</h2>
                     <p className="text-xs text-gray-500 mt-1">Select up to 10 images for prediction</p>
                   </div>
                   
-                  <div className="p-4 flex-1 overflow-y-auto min-h-0">
+                  <div className="p-4 flex-1 overflow-y-auto md:min-h-0">
                     {recentImages.length > 0 ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {recentImages.map((img, i) => (
@@ -259,11 +259,11 @@ export default function Prediction() {
               </div>
               
               {/* Right Panel - Preview + Results */}
-              <div className="md:col-span-8 flex flex-col gap-3 h-full min-h-0 max-h-full overflow-hidden">
+              <div className="md:col-span-8 flex flex-col gap-3 md:h-full md:min-h-0 md:max-h-full md:overflow-hidden">
                 {/* Image Preview + Prediction Controls + Recent Predictions side by side */}
-                <div className="border border-gray-200 rounded-lg bg-white shadow-sm flex flex-row flex-1 min-h-0 max-h-full overflow-hidden gap-4 h-full w-full relative">
+                <div className="border border-gray-200 rounded-lg bg-white shadow-sm flex flex-row flex-1 md:min-h-0 md:max-h-full md:overflow-hidden gap-4 md:h-full w-full relative">
                   {/* Left: Preview + Tray */}
-                  <div className="flex-1 flex flex-col min-h-0 h-full w-full">
+                  <div className="flex-1 flex flex-col md:min-h-0 md:h-full w-full">
                     <div className="flex items-center justify-between p-4 border-b border-gray-200">
                       <h2 className="text-gray-800 text-sm font-medium">Preview & Prediction</h2>
                       <button 
@@ -297,11 +297,11 @@ export default function Prediction() {
                     </div>
                     
                     {/* Image preview container */}
-                    <div className="flex-1 flex flex-col bg-gray-50 min-h-0 h-full w-full relative overflow-hidden">
+                    <div className="flex-1 flex flex-col bg-gray-50 md:min-h-0 md:h-full w-full relative md:overflow-hidden">
                       
                       {/* Main preview area */}
-                      <div className="flex-1 flex flex-col bg-gray-50 min-h-0 h-full w-full relative overflow-hidden">
-                        <div className="flex-1 flex items-center justify-center w-full h-full min-h-0 min-w-0 relative overflow-hidden p-0 m-0">
+                      <div className="flex-1 flex flex-col bg-gray-50 md:min-h-0 md:h-full w-full relative md:overflow-hidden">
+                        <div className="flex-1 flex items-center justify-center w-full md:h-full md:min-h-0 md:min-w-0 relative md:overflow-hidden p-0 m-0">
                           {selectedImages.length > 0 ? (
                             <>
                               {/* Blurred BG */}
@@ -351,8 +351,8 @@ export default function Prediction() {
                     </div>
                   </div>
                   
-                  {/* Slide-over Recent Predictions (inside preview section) */}
-                  <div className="absolute inset-0 z-40 pointer-events-none">
+                  {/* Slide-over Recent Predictions (inside preview section) - Hidden on mobile */}
+                  <div className="absolute inset-0 z-40 pointer-events-none hidden md:block">
                     <button
                       className={`absolute right-0 top-1/2 z-50 bg-white/80 border border-white/30 rounded-l-full shadow p-1 flex items-center justify-center transition-all duration-300 ${showRecent ? 'translate-x-0' : 'translate-x-full'}`}
                       style={{transform: showRecent ? 'translateY(-50%)' : 'translateY(-50%)', pointerEvents:'auto'}}
@@ -424,6 +424,62 @@ export default function Prediction() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+                
+                {/* Recent Predictions Section for Mobile - Below the preview */}
+                <div className="md:hidden border border-gray-200 rounded-lg bg-white shadow-sm">
+                  <div className="p-4 border-b border-gray-200">
+                    <h2 className="text-gray-800 text-sm font-medium">Recent Predictions</h2>
+                  </div>
+                  <div className="p-3 max-h-64 overflow-y-auto">
+                    {resultsHistory.length > 0 ? (
+                      <div className="flex flex-col gap-2">
+                        {resultsHistory.map((result, index) => (
+                          <div
+                            key={index}
+                            className="flex bg-gray-50 rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+                            onClick={() => setDetailResult(result)}
+                          >
+                            <div className="w-12 h-12 flex-shrink-0 bg-gray-200">
+                              <img 
+                                src={result.annotated_image || result.predictedImage.previewUrl} 
+                                alt="Prediction"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1 p-3 min-w-0">
+                              <p className="font-medium text-sm text-gray-900 truncate">{result.predictedImage.fileName}</p>
+                              <div className="flex flex-wrap gap-1 my-1">
+                                {result.detections.length > 0 ? (
+                                  result.detections.slice(0, 3).map((d: Detection, i: number) => (
+                                    <span key={`${d.class}-${i}`} className="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs font-medium">
+                                      {d.class} ({(d.confidence * 100).toFixed(1)}%)
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-gray-500">No detections</span>
+                                )}
+                                {result.detections.length > 3 && (
+                                  <span className="inline-block bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs">
+                                    +{result.detections.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500">{result.timestamp}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <p className="text-sm text-gray-500">No prediction history yet</p>
+                        <p className="text-xs text-gray-400">Results will appear here after prediction</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
