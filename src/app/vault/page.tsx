@@ -1,5 +1,5 @@
 "use client"
-import DistributeGraph from "@/components/distributegraph";
+import CellDistributionTable from "@/components/distributegraph";
 import Header from "@/components/header";
 import { useEffect, useState } from "react";
 
@@ -115,6 +115,14 @@ export default function Vault() {
         });
         
         console.log('Processed logs:', processedLogs); // Debug log to inspect processed data
+        
+        // Additional debug for the first log
+        if (processedLogs.length > 0) {
+          console.log('First log details:', processedLogs[0]);
+          console.log('First log detections:', processedLogs[0].detections);
+          console.log('First log images:', processedLogs[0].images);
+        }
+        
         setLogs(processedLogs);
         setError(null);
       } catch (err: unknown) {
@@ -185,13 +193,19 @@ export default function Vault() {
 
   // เลือก log
   const handleLogSelect = (log: Log) => {
+    console.log('handleLogSelect called with log:', log); // Debug log
     setSelectedLog(log);
-    setSelectedImage(log.images && log.images.length > 0 ? getImageUrl(log.images[0]) : null);
+    const firstImageUrl = log.images && log.images.length > 0 ? getImageUrl(log.images[0]) : null;
+    console.log('Setting selectedImage to:', firstImageUrl); // Debug log
+    setSelectedImage(firstImageUrl);
   };
 
   // เลือกรูปภาพจาก log
   const handleImageSelect = (image: unknown) => {
-    setSelectedImage(getImageUrl(image));
+    const imageUrl = getImageUrl(image);
+    console.log('handleImageSelect called with image:', image); // Debug log
+    console.log('Setting selectedImage to:', imageUrl); // Debug log
+    setSelectedImage(imageUrl);
   };
 
   // Toggle bounding boxes
@@ -226,18 +240,31 @@ export default function Vault() {
 
   // Get detections for the current image
   const getCurrentImageDetections = () => {
-    if (!selectedLog?.detections || !selectedLog?.images) return [];
+    console.log('getCurrentImageDetections called'); // Debug log
+    console.log('selectedLog?.detections:', selectedLog?.detections); // Debug log
+    console.log('selectedLog?.images:', selectedLog?.images); // Debug log
+    console.log('selectedImage:', selectedImage); // Debug log
+    
+    if (!selectedLog?.detections || !selectedLog?.images) {
+      console.log('No detections or images, returning empty array'); // Debug log
+      return [];
+    }
     
     const currentImageIndex = selectedLog.images.findIndex(img => 
       getImageUrl(img) === selectedImage
     );
     
+    console.log('currentImageIndex:', currentImageIndex); // Debug log
+    
     if (currentImageIndex >= 0) {
-      return selectedLog.detections.filter(detection => 
+      const filteredDetections = selectedLog.detections.filter(detection => 
         detection.imageIndex === currentImageIndex
       );
+      console.log('filteredDetections:', filteredDetections); // Debug log
+      return filteredDetections;
     }
     
+    console.log('No matching image index, returning empty array'); // Debug log
     return [];
   };
 
@@ -723,7 +750,10 @@ export default function Vault() {
                         <div className="p-2">
                           {selectedLog.detections && selectedLog.detections.length > 0 ? (
                             <div className="bg-gray-50/90 p-2 rounded border border-gray-100">
-                              <DistributeGraph detections={selectedLog.detections} />
+                              <CellDistributionTable 
+                                detections={getCurrentImageDetections()} 
+                                allDetections={selectedLog.detections}
+                              />
                             </div>
                           ) : (
                             <p className="text-xs text-gray-500 py-1 text-center">No data to display</p>
