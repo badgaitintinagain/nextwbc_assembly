@@ -233,7 +233,7 @@ export default function AdminDashboard() {
         {/* Semi-transparent overlay */}
         <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
 
-        <main className="relative z-20 flex flex-col flex-1">
+        <main className="relative z-20 flex flex-col flex-1 pt-16">
           <Header />
           <div className="flex-1 flex items-center justify-center">
             <div className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-2xl shadow-2xl p-8">
@@ -270,7 +270,7 @@ export default function AdminDashboard() {
         {/* Semi-transparent overlay */}
         <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
 
-        <main className="relative z-20 flex flex-col h-full overflow-hidden">
+        <main className="relative z-20 flex flex-col h-full overflow-hidden pt-16">
           <Header />
           <div className="px-2 sm:px-4 md:px-6 py-4 mx-auto max-w-7xl flex-1 overflow-auto">
             <div className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-2xl shadow-2xl p-3 sm:p-4 md:p-6">

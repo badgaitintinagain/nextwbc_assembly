@@ -191,20 +191,21 @@ export default function Tutorial() {
     const [activeSection, setActiveSection] = useState("auth");
 
     return (
-        <div className="relative flex flex-col min-h-screen">
+        <div className="relative flex flex-col min-h-screen w-full bg-black overflow-hidden">
             {/* Background video */}
-            <div className="absolute inset-0 z-0 overflow-hidden">
+            <div className="absolute inset-0 z-0 w-full h-full">
                 <video
                     autoPlay
                     loop
                     muted
-                    className="fixed top-0 left-0 w-full h-full object-cover object-center blur-md brightness-50"
+                    className="absolute top-0 left-0 w-full h-full object-cover blur-md brightness-50"
+                    style={{ transform: 'scale(1.1)' }} // Slight scale to ensure no gaps
                 >
                     <source src="/shortvid/gradient_loop.mp4" type="video/mp4" />
                 </video>
             </div>
             {/* Semi-transparent overlay */}
-            <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
+            <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md w-full h-full"></div>
             {/* Main content */}
             <main className="relative z-20 flex flex-col flex-1">
                 <Header />

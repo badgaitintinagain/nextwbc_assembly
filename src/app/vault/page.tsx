@@ -162,24 +162,25 @@ export default function Vault() {
   // Show loading screen while checking authentication
   if (status === "loading") {
     return (
-      <div className="relative flex flex-col min-h-screen">
+      <div className="relative flex flex-col min-h-screen w-full bg-black overflow-hidden">
         {/* Background video */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 z-0 w-full h-full">
           <video
             autoPlay
             loop
             muted
-            className="fixed top-0 left-0 w-full h-full object-cover object-center blur-md brightness-50"
+            className="absolute top-0 left-0 w-full h-full object-cover blur-md brightness-50"
+            style={{ transform: 'scale(1.1)' }} // Slight scale to ensure no gaps
           >
             <source src="/shortvid/gradient_loop.mp4" type="video/mp4" />
           </video>
         </div>
 
         {/* Semi-transparent overlay */}
-        <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
+        <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md w-full h-full"></div>
 
         {/* Loading content */}
-        <main className="relative z-20 flex flex-col h-screen">
+        <main className="relative z-20 flex flex-col h-screen pt-16">
           <Header />
           <div className="flex-1 flex items-center justify-center">
             <div className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl p-8 text-center">
@@ -477,39 +478,63 @@ export default function Vault() {
   };
 
   return (
-    <div className="relative flex flex-col min-h-screen">
+    <div className="relative flex flex-col min-h-screen w-full bg-black overflow-hidden">
       {/* Background video */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      <div className="absolute inset-0 z-0 w-full h-full">
         <video
           autoPlay
           loop
           muted
-          className="fixed top-0 left-0 w-full h-full object-cover object-center blur-md brightness-50"
+          className="absolute top-0 left-0 w-full h-full object-cover blur-md brightness-50"
+          style={{ transform: 'scale(1.1)' }} // Slight scale to ensure no gaps
         >
           <source src="/shortvid/gradient_loop.mp4" type="video/mp4" />
         </video>
       </div>
 
       {/* Semi-transparent overlay */}
-      <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md"></div>
+      <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-md w-full h-full"></div>
 
       {/* main content */}
-      <main className="relative z-20 flex flex-col h-screen">
+      <main className="relative z-20 flex flex-col h-screen pt-16">
         <Header />
         <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-4 overflow-auto lg:overflow-hidden lg:h-full lg:flex lg:flex-col">
-          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl p-4 min-h-full lg:flex-1 lg:flex lg:flex-col lg:min-h-0">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0 lg:flex-1 lg:h-full">
+          {/* Subtle decorative elements */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-15 pointer-events-none">
+            <div className="absolute top-12 left-12 w-20 h-20 bg-gradient-to-br from-white/25 to-transparent rounded-full blur-md"></div>
+            <div className="absolute bottom-16 right-14 w-16 h-16 bg-gradient-to-tl from-white/20 to-transparent rounded-full blur-md"></div>
+            <div className="absolute top-1/3 right-1/4 w-12 h-12 bg-gradient-to-r from-white/15 to-transparent rounded-full blur-sm"></div>
+          </div>
+          
+          <div className="bg-black/60 backdrop-blur-xl border border-white/30 rounded-3xl shadow-2xl p-4 min-h-full lg:flex-1 lg:flex lg:flex-col lg:min-h-0 relative" style={{
+            backdropFilter: 'blur(15px)',
+            background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.8) 100%)',
+            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+          }}>
+            {/* Decorative glass effect elements */}
+            <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none">
+              <div className="absolute top-6 left-6 w-12 h-12 bg-gradient-to-br from-white/40 to-transparent rounded-full blur-sm"></div>
+              <div className="absolute bottom-8 right-8 w-10 h-10 bg-gradient-to-tl from-blue-400/50 to-transparent rounded-full blur-sm"></div>
+              <div className="absolute top-1/2 left-1/2 w-8 h-8 bg-gradient-to-br from-purple-400/40 to-transparent rounded-full blur-sm transform -translate-x-1/2 -translate-y-1/2"></div>
+            </div>
+            {/* Header gradient line */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-t-3xl"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0 lg:flex-1 lg:h-full relative z-10">
               {/* Column 1: Log List - Takes full width on mobile, 3/12 columns on larger screens */}
-              <div className="lg:col-span-3 bg-white/90 border border-gray-100 rounded-xl lg:rounded-l-2xl shadow-md flex flex-col h-80 lg:h-full overflow-hidden">
-                <div className="flex items-center justify-between p-3 border-b border-gray-100 flex-shrink-0">
-                  <h3 className="text-sm font-semibold text-gray-800">Prediction Logs</h3>
+              <div className="lg:col-span-3 bg-black/60 backdrop-blur-xl border border-white/30 rounded-xl lg:rounded-l-2xl shadow-lg flex flex-col h-80 lg:h-full overflow-hidden" style={{
+                backdropFilter: 'blur(15px)',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%)',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              }}>
+                <div className="flex items-center justify-between p-3 border-b border-white/30 flex-shrink-0 bg-black/20 backdrop-blur-sm rounded-t-xl">
+                  <h3 className="text-sm font-semibold text-white drop-shadow-md">Prediction Logs</h3>
                   <div className="flex space-x-1">
                     {/* Edit mode toggle button */}
                     <button
                       className={`text-xs px-2 py-1 rounded-md transition-all ${
                         isEditing 
-                          ? 'bg-blue-50 text-blue-600 font-medium' 
-                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                          ? 'bg-blue-500/30 backdrop-blur-sm text-blue-200 font-medium border border-blue-400/40' 
+                          : 'bg-white/20 backdrop-blur-sm text-white/80 hover:bg-white/25 border border-white/30'
                       }`}
                       onClick={toggleEditMode}
                     >
@@ -521,8 +546,8 @@ export default function Vault() {
                       <button
                         className={`text-xs px-2 py-1 rounded-md transition-all ${
                           selectedLogsForDeletion.length > 0
-                            ? 'bg-red-50 text-red-600 hover:bg-red-100 font-medium'
-                            : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                            ? 'bg-red-500/30 backdrop-blur-sm text-red-200 hover:bg-red-500/40 font-medium border border-red-400/40'
+                            : 'bg-white/10 backdrop-blur-sm text-white/50 cursor-not-allowed border border-white/20'
                         }`}
                         onClick={() => {
                           if (selectedLogsForDeletion.length > 0) {
@@ -539,21 +564,21 @@ export default function Vault() {
                 
                 <div className="flex-1 overflow-y-auto p-2">
                   {logs.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-center p-4 text-gray-500">
+                    <div className="flex items-center justify-center h-full text-center p-4 text-white">
                       {isLoading ? (
                         <div className="flex flex-col items-center">
-                          <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                          <p className="text-sm">Loading...</p>
+                          <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin mb-2"></div>
+                          <p className="text-sm drop-shadow-md">Loading...</p>
                         </div>
                       ) : error ? (
                         <div>
-                          <p className="font-medium text-sm">Error Loading Data</p>
-                          <p className="text-xs mt-1 text-red-500">{error}</p>
+                          <p className="font-medium text-sm drop-shadow-md">Error Loading Data</p>
+                          <p className="text-xs mt-1 text-red-300 drop-shadow-sm">{error}</p>
                         </div>
                       ) : (
                         <div className="space-y-0 h-full p-2">
-                          <p className="font-medium text-sm">No Prediction History</p>
-                          <p className="text-xs mt-1">Create a new prediction to see results here</p>
+                          <p className="font-medium text-sm drop-shadow-md">No Prediction History</p>
+                          <p className="text-xs mt-1 text-white/70 drop-shadow-sm">Create a new prediction to see results here</p>
                         </div>
                       )}
                     </div>
@@ -562,8 +587,8 @@ export default function Vault() {
                       {logs.map((log) => (
                         <div
                           key={log.id}
-                          className={`bg-white/90 border border-gray-100 rounded-lg shadow-sm p-2 hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex items-center gap-2 ${
-                            selectedLog?.id === log.id ? 'ring-2 ring-blue-500 border-blue-400 shadow-md' : ''
+                          className={`bg-black/40 backdrop-blur-md border border-white/30 rounded-lg shadow-sm p-2 hover:shadow-lg hover:border-white/50 hover:bg-black/50 transition-all cursor-pointer flex items-center gap-2 group hover:scale-[1.02] ${
+                            selectedLog?.id === log.id ? 'ring-2 ring-blue-400/80 border-blue-400/60 shadow-lg bg-black/60' : ''
                           }`}
                           onClick={() => !isEditing && handleLogSelect(log)}
                         >
@@ -574,11 +599,11 @@ export default function Vault() {
                                 type="checkbox"
                                 checked={selectedLogsForDeletion.includes(log.id)}
                                 onChange={(e) => toggleLogSelection(log.id, e as unknown as React.MouseEvent)}
-                                className="w-3 h-3 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                className="w-3 h-3 text-blue-500 bg-black/30 border-white/40 rounded focus:ring-blue-400 focus:ring-2"
                               />
                             </div>
                           )}
-                          <div className="flex-shrink-0 h-12 w-12 bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
+                          <div className="flex-shrink-0 h-12 w-12 bg-black/20 backdrop-blur-sm rounded-lg overflow-hidden border border-white/30 group-hover:border-white/50 transition-colors">
                             {log.images && log.images[0] ? (
                               <img
                                 src={getImageUrl(log.images[0]) || undefined}
@@ -586,22 +611,22 @@ export default function Vault() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-xs text-gray-500">No image</span>
+                              <div className="w-full h-full bg-black/20 flex items-center justify-center">
+                                <span className="text-xs text-white/60 drop-shadow-sm">No image</span>
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                            <p className="text-sm text-gray-900 font-semibold truncate">
+                            <p className="text-sm text-white font-semibold truncate drop-shadow-md">
                               {log.title || `Log ${log.timestamp}`}
                             </p>
-                            <p className="text-xs text-gray-600 truncate">{log.timestamp}</p>
+                            <p className="text-xs text-white/70 truncate drop-shadow-sm">{log.timestamp}</p>
                             <div className="flex items-center gap-1 mt-0.5">
-                              <span className="text-xs px-1.5 py-0.5 bg-gray-100/80 text-gray-700 rounded-full">
+                              <span className="text-xs px-1.5 py-0.5 bg-black/40 backdrop-blur-sm text-white drop-shadow-sm rounded-full border border-white/30">
                                 {log.imageCount} images
                               </span>
                               {log.detections && log.detections.length > 0 && (
-                                <span className="text-xs px-1.5 py-0.5 bg-blue-100/80 text-blue-700 rounded-full">
+                                <span className="text-xs px-1.5 py-0.5 bg-blue-500/40 backdrop-blur-sm text-blue-200 rounded-full border border-blue-400/50 drop-shadow-sm">
                                   {log.detections.length} detections
                                 </span>
                               )}
@@ -615,14 +640,24 @@ export default function Vault() {
               </div>
               
               {/* Columns 2-3: Image Preview - Takes full width on mobile, 6/12 columns on larger screens */}
-              <div className="lg:col-span-6 bg-white/90 border border-gray-100 rounded-xl shadow-md flex flex-col h-80 lg:h-full overflow-hidden">
+              <div className="lg:col-span-6 bg-black/60 backdrop-blur-xl border border-white/30 rounded-xl shadow-lg flex flex-col h-80 lg:h-full overflow-hidden relative" style={{
+                backdropFilter: 'blur(15px)',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%)',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              }}>
+                {/* Decorative glass effect elements */}
+                <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none">
+                  <div className="absolute top-4 left-4 w-8 h-8 bg-gradient-to-br from-white/40 to-transparent rounded-full blur-sm"></div>
+                  <div className="absolute bottom-6 right-6 w-6 h-6 bg-gradient-to-tl from-blue-400/50 to-transparent rounded-full blur-sm"></div>
+                  <div className="absolute top-1/3 right-1/4 w-4 h-4 bg-gradient-to-br from-purple-400/40 to-transparent rounded-full blur-sm"></div>
+                </div>
                 {selectedLog ? (
-                  <div className="h-full flex flex-col">
-                    {/* Header - Always visible on mobile now */}
-                    <div className="p-2 lg:p-3 border-b border-gray-100 flex-shrink-0">
+                  <div className="h-full flex flex-col relative z-10">
+                    {/* Header */}
+                    <div className="p-2 lg:p-3 border-b border-white/30 flex-shrink-0 bg-black/20 backdrop-blur-sm rounded-t-xl">
                       <div className="flex items-center justify-between mb-1 lg:mb-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-gray-800 truncate">
+                          <h3 className="text-sm font-semibold text-white truncate drop-shadow-md">
                             {selectedLog.title || selectedLog.timestamp}
                           </h3>
                           <div className="lg:hidden mt-1">
@@ -633,27 +668,24 @@ export default function Vault() {
                                 onChange={toggleBoundingBoxes}
                                 className="sr-only peer"
                               />
-                              <div className="relative w-8 h-4 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500"></div>
-                              <span className="ml-1 text-xs text-gray-600">Bounding Boxes</span>
+                              <div className="relative w-8 h-4 bg-black/40 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-white after:border-white/30 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500/80"></div>
+                              <span className="ml-1 text-xs text-white drop-shadow-sm">Bounding Boxes</span>
                             </label>
                           </div>
                         </div>
                         {/* Edit button with pencil icon */}
                         <button
-                          className="text-gray-400 hover:text-blue-500 transition-colors p-1 flex-shrink-0"
+                          className="text-white/60 hover:text-blue-300 transition-colors p-1 flex-shrink-0 hover:scale-110 group"
                           onClick={(e) => openRenameModal(selectedLog, e)}
                           title="Edit title and description"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
                         </button>
                       </div>
                       
                       <div className="hidden lg:flex items-center">
-                        <h4 className="text-xs font-medium text-gray-700">
-                          Image Tray
-                        </h4>
                         <div className="ml-auto">
                           <label className="inline-flex items-center">
                             <input
@@ -662,53 +694,25 @@ export default function Vault() {
                               onChange={toggleBoundingBoxes}
                               className="sr-only peer"
                             />
-                            <div className="relative w-8 h-4 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500"></div>
-                            <span className="ml-1 text-xs text-gray-600">Bounding Boxes</span>
+                            <div className="relative w-8 h-4 bg-black/40 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-white after:border-white/30 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500/80"></div>
+                            <span className="ml-1 text-xs text-white drop-shadow-sm">Bounding Boxes</span>
                           </label>
                         </div>
                       </div>
                     </div>
                     
-                    {/* Image Tray - Responsive sizing */}
-                    <div className="px-2 lg:px-3 py-0.5 lg:py-1 flex-shrink-0">
-                      <div className="flex space-x-1 overflow-x-auto p-1 lg:p-1.5 bg-gray-50 border border-gray-200 rounded-lg">
-                        {selectedLog.images && selectedLog.images.map((image, index) => {
-                          const imageUrl = getImageUrl(image);
-                          return imageUrl ? (
-                            <div
-                              key={index}
-                              className={`flex-shrink-0 h-14 w-14 lg:h-16 lg:w-16 rounded-md cursor-pointer overflow-hidden border-2 transition-all ${selectedImage === imageUrl ? 'border-blue-500 shadow' : 'border-transparent hover:border-gray-300'}`}
-                              onClick={() => handleImageSelect(image)}
-                            >
-                              <img
-                                src={imageUrl}
-                                alt={`Image ${index + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ) : null;
-                        })}
-                        {selectedLog.images && selectedLog.images.length > 6 && (
-                          <div className="flex-shrink-0 h-14 w-14 lg:h-16 lg:w-16 px-1 lg:px-2 bg-gray-100 rounded-md flex items-center justify-center">
-                            <span className="text-xs text-gray-600">+{selectedLog.images.length - 6}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Preview - Responsive sizing */}
-                    <div className="flex-1 p-0.5 lg:p-1 flex flex-col min-h-0">
-                      <h4 className="hidden lg:block text-xs font-medium text-gray-700 mb-0.5 flex-shrink-0">Preview</h4>
-                      <div className="flex-1 w-full bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 min-h-0 relative">
+                    {/* Preview - PredictDemo style with background image */}
+                    <div className="flex-1 p-2 flex flex-col min-h-0">
+                      <div className="flex-1 w-full bg-black/40 backdrop-blur-md rounded-2xl flex items-center justify-center overflow-hidden border border-white/30 min-h-0 relative shadow-xl">
                         {/* Background image with liquid glass effect */}
                         {getDisplayImage() && (
                           <div className="absolute inset-0">
                             <img
                               src={getDisplayImage() || undefined}
                               alt="Background"
-                              className="w-full h-full object-cover opacity-60 blur-lg scale-105"
+                              className="w-full h-full object-cover opacity-40 blur-xl scale-105"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-white/15 backdrop-blur-xs"></div>
+                            <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/30 to-black/40 backdrop-blur-xs"></div>
                           </div>
                         )}
                         
@@ -718,7 +722,7 @@ export default function Vault() {
                               ref={imgRefCallback}
                               src={getDisplayImage() || undefined}
                               alt="Preview"
-                              className="w-full h-full object-contain drop-shadow-lg"
+                              className="w-full h-full object-contain drop-shadow-2xl"
                               onLoad={(e) => {
                                 // Update image reference when image is loaded
                                 if (e.currentTarget) {
@@ -726,6 +730,20 @@ export default function Vault() {
                                 }
                               }}
                             />
+                            {/* Results overlay with glass effect similar to PredictDemo */}
+                            {selectedLog.detections && selectedLog.detections.length > 0 && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md text-white p-3 text-sm rounded-b-2xl z-20 border-t border-white/30">
+                                <div className="flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <p className="drop-shadow-sm">
+                                    <span className="text-green-400 font-medium">Total Detections:</span> {selectedLog.detections.length} objects found
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            
                             {/* Only render DIV-based bounding boxes if we're showing bounding boxes
                                 AND the current image doesn't already have annotations */}
                             {showBoundingBoxes && imageRef && getCurrentImageDetections().length > 0 && 
@@ -760,7 +778,7 @@ export default function Vault() {
                                     <div key={idx} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}}>
                                       <div style={style}>
                                         <div 
-                                          className="text-white text-xs px-1 py-0.5 absolute top-0 left-0 transform -translate-y-full"
+                                          className="text-white text-xs px-1 py-0.5 absolute top-0 left-0 transform -translate-y-full drop-shadow-md"
                                           style={{ backgroundColor: getColorForClass(detection.class) }}
                                         >
                                           {detection.class} {(detection.confidence * 100).toFixed(1)}%
@@ -772,84 +790,129 @@ export default function Vault() {
                               </div>
                             )}
                             {showBoundingBoxes && getCurrentImageDetections().length === 0 && (
-                              <div className="absolute bottom-1 right-1 bg-yellow-100 text-yellow-800 text-xs p-1 rounded">
+                              <div className="absolute bottom-4 right-4 bg-yellow-500/30 backdrop-blur-md text-yellow-200 text-xs p-2 rounded-lg border border-yellow-400/50 drop-shadow-lg">
                                 No bounding box data available
                               </div>
                             )}
                           </div>
                         ) : (
-                          <div className="text-gray-400 text-sm z-10 relative">No image available</div>
+                          <div className="flex flex-col items-center justify-center w-full h-full z-10 relative">
+                            {/* Glass morphism background for no image area */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-black/20 backdrop-blur-sm"></div>
+                            <div className="relative text-center">
+                              <svg className="w-12 h-12 text-white/50 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
+                              </svg>
+                              <p className="text-white drop-shadow-md font-medium">No image available</p>
+                              <p className="text-white/70 text-sm mt-1 drop-shadow-sm">Select an image from the tray below</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Image Tray - PredictDemo style at bottom */}
+                        {selectedLog.images && selectedLog.images.length > 0 && (
+                          <div className="absolute inset-x-0 bottom-4 z-30 flex justify-center pointer-events-none">
+                            <div className="flex justify-center gap-2 px-3 py-2 bg-black/70 backdrop-blur-xl rounded-2xl shadow-2xl min-h-[44px] border border-white/40 pointer-events-auto animate-slideDown" style={{
+                              maxWidth: '90%',
+                              backdropFilter: 'blur(15px)',
+                              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%)',
+                              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                            }}>
+                              {selectedLog.images.map((image, index) => {
+                                const imageUrl = getImageUrl(image);
+                                return imageUrl ? (
+                                  <div
+                                    key={index}
+                                    className={`h-10 w-10 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:scale-110 ${
+                                      selectedImage === imageUrl 
+                                        ? 'ring-2 ring-blue-400 shadow-lg scale-105' 
+                                        : 'border border-white/30 hover:border-white/50 shadow-md hover:shadow-lg'
+                                    }`}
+                                    onClick={() => handleImageSelect(image)}
+                                  >
+                                    <img
+                                      src={imageUrl}
+                                      alt={`Thumb ${index}`}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-center p-4">
+                  <div className="h-full flex items-center justify-center text-center p-4 relative z-10">
                     <div className="max-w-xs">
-                      <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="w-8 h-8 text-white/50 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
                       </svg>
-                      <p className="text-gray-500 font-medium text-sm">Select a log to view images</p>
-                      <p className="text-gray-400 text-xs mt-1">Choose a log entry from the list to see detected images</p>
+                      <p className="text-white drop-shadow-md font-medium text-sm">Select a log to view images</p>
+                      <p className="text-white/70 text-xs mt-1 drop-shadow-sm">Choose a log entry from the list to see detected images</p>
                     </div>
                   </div>
                 )}
               </div>
               
               {/* Column 4: Statistics and Description - Takes full width on mobile, 3/12 columns on larger screens */}
-              <div className="lg:col-span-3 bg-white/90 border border-gray-100 rounded-xl lg:rounded-r-2xl shadow-md flex flex-col h-80 lg:h-full overflow-hidden">
-                <div className="p-3 border-b border-gray-100 flex-shrink-0">
-                  <h3 className="text-sm font-semibold text-gray-800">Details</h3>
+              <div className="lg:col-span-3 bg-black/60 backdrop-blur-xl border border-white/30 rounded-xl lg:rounded-r-2xl shadow-lg flex flex-col h-80 lg:h-full overflow-hidden" style={{
+                backdropFilter: 'blur(15px)',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%)',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              }}>
+                <div className="p-3 border-b border-white/30 flex-shrink-0 bg-black/20 backdrop-blur-sm rounded-t-xl">
+                  <h3 className="text-sm font-semibold text-white drop-shadow-md">Details</h3>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-3">
+                <div className="flex-1 overflow-y-auto p-3 relative z-10">
                   {selectedLog ? (
                     <div className="space-y-3">
                       {/* Description Section */}
-                      <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                        <div className="flex items-center justify-between p-2 border-b border-gray-100">
-                          <h4 className="text-xs font-medium text-gray-700">Description</h4>
+                      <div className="bg-black/40 backdrop-blur-md border border-white/30 rounded-lg overflow-hidden shadow-lg">
+                        <div className="flex items-center justify-between p-2 border-b border-white/30 bg-black/20 backdrop-blur-sm">
+                          <h4 className="text-xs font-medium text-white drop-shadow-sm">Description</h4>
                           <button
-                            className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                            className="text-white/60 hover:text-blue-300 transition-colors p-1 hover:scale-110 group"
                             onClick={(e) => openRenameModal(selectedLog, e)}
                             title="Edit description"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                           </button>
                         </div>
                         <div className="p-2">
                           {selectedLog.description ? (
-                            <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                            <p className="text-xs text-white drop-shadow-sm whitespace-pre-line leading-relaxed">
                               {selectedLog.description}
                             </p>
                           ) : (
-                            <p className="text-xs text-gray-500 italic">
+                            <p className="text-xs text-white/60 italic drop-shadow-sm">
                               No description available. Click the edit icon to add one.
                             </p>
                           )}
                         </div>
                       </div>
                       
-                      <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                        <h4 className="text-xs font-medium text-gray-700 p-2 border-b border-gray-100">Class Distribution</h4>
+                      <div className="bg-black/40 backdrop-blur-md border border-white/30 rounded-lg overflow-hidden shadow-lg">
+                        <h4 className="text-xs font-medium text-white drop-shadow-sm p-2 border-b border-white/30 bg-black/20 backdrop-blur-sm">Class Distribution</h4>
                         <div className="p-2">
                           {selectedLog.detections && selectedLog.detections.length > 0 ? (
-                            <div className="bg-gray-50/90 p-2 rounded border border-gray-100">
-                              <CellDistributionTable 
-                                detections={getCurrentImageDetections()} 
-                                allDetections={selectedLog.detections}
-                              />
-                            </div>
+                            <CellDistributionTable 
+                              detections={getCurrentImageDetections()} 
+                              allDetections={selectedLog.detections}
+                            />
                           ) : (
-                            <p className="text-xs text-gray-500 py-1 text-center">No data to display</p>
+                            <p className="text-xs text-white/60 py-1 text-center drop-shadow-sm">No data to display</p>
                           )}
                         </div>
                       </div>
                       
-                      <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                        <h4 className="text-xs font-medium text-gray-700 p-2 border-b border-gray-100">Detection Summary</h4>
+                      <div className="bg-black/40 backdrop-blur-md border border-white/30 rounded-lg overflow-hidden shadow-lg">
+                        <h4 className="text-xs font-medium text-white drop-shadow-sm p-2 border-b border-white/30 bg-black/20 backdrop-blur-sm">Detection Summary</h4>
                         <div className="p-2">
                           {selectedLog?.detections && selectedLog.detections.length > 0 ? (
                             <div className="grid grid-cols-1 gap-1.5">
@@ -861,14 +924,14 @@ export default function Vault() {
                               ).map(([className, detections]: [string, Detection[]]) => (
                                 <div
                                   key={className}
-                                  className="bg-blue-50 p-2 rounded border border-blue-100"
+                                  className="bg-blue-500/30 backdrop-blur-sm p-2 rounded border border-blue-400/40 shadow-sm"
                                 >
-                                  <p className="text-xs font-medium text-gray-800 mb-1">{className}</p>
+                                  <p className="text-xs font-medium text-white drop-shadow-sm mb-1">{className}</p>
                                   <div className="flex flex-wrap gap-1">
                                     {detections.map((detection: Detection, idx: number) => (
                                       <span
                                         key={idx}
-                                        className="inline-block bg-blue-100 text-blue-700 text-xs px-1 py-0.5 rounded cursor-pointer hover:bg-blue-200 transition-colors"
+                                        className="inline-block bg-blue-500/40 backdrop-blur-sm text-blue-200 text-xs px-1 py-0.5 rounded cursor-pointer hover:bg-blue-500/50 transition-colors border border-blue-400/50 hover:scale-105"
                                         title={`Click to view in image ${detection.imageIndex + 1}${
                                           selectedLog.images && 
                                           selectedLog.images[detection.imageIndex] 
@@ -885,37 +948,37 @@ export default function Vault() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-gray-500 py-1 text-center">No detections available</p>
+                            <p className="text-xs text-white/60 py-1 text-center drop-shadow-sm">No detections available</p>
                           )}
                         </div>
                       </div>
                       
-                      <div className="bg-white/90 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                        <h4 className="text-xs font-medium text-gray-700 p-2 border-b border-gray-100">Log Info</h4>
+                      <div className="bg-black/40 backdrop-blur-md border border-white/30 rounded-lg overflow-hidden shadow-lg">
+                        <h4 className="text-xs font-medium text-white drop-shadow-sm p-2 border-b border-white/30 bg-black/20 backdrop-blur-sm">Log Info</h4>
                         <div className="p-2 space-y-1">
                           <div className="flex justify-between">
-                            <span className="text-xs text-gray-500">ID:</span>
-                            <span className="text-xs text-gray-700 font-mono">{selectedLog.id.substring(0, 8)}...</span>
+                            <span className="text-xs text-white/60 drop-shadow-sm">ID:</span>
+                            <span className="text-xs text-white drop-shadow-sm font-mono">{selectedLog.id.substring(0, 8)}...</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-xs text-gray-500">Time:</span>
-                            <span className="text-xs text-gray-700">{selectedLog.timestamp}</span>
+                            <span className="text-xs text-white/60 drop-shadow-sm">Time:</span>
+                            <span className="text-xs text-white drop-shadow-sm">{selectedLog.timestamp}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-xs text-gray-500">Images:</span>
-                            <span className="text-xs text-gray-700">{selectedLog.imageCount}</span>
+                            <span className="text-xs text-white/60 drop-shadow-sm">Images:</span>
+                            <span className="text-xs text-white drop-shadow-sm">{selectedLog.imageCount}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-xs text-gray-500">Detections:</span>
-                            <span className="text-xs text-gray-700">{selectedLog.detections?.length || 0}</span>
+                            <span className="text-xs text-white/60 drop-shadow-sm">Detections:</span>
+                            <span className="text-xs text-white drop-shadow-sm">{selectedLog.detections?.length || 0}</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center p-4 text-gray-500 bg-gray-50/90 rounded-lg border border-gray-100">
-                      <p className="font-medium text-sm">Select a log to view details</p>
-                      <p className="text-xs mt-1 text-gray-400">Description and statistics will appear here</p>
+                    <div className="text-center p-4 text-white bg-black/30 backdrop-blur-md rounded-lg border border-white/25 shadow-lg">
+                      <p className="font-medium text-sm drop-shadow-md">Select a log to view details</p>
+                      <p className="text-xs mt-1 text-white/70 drop-shadow-sm">Description and statistics will appear here</p>
                     </div>
                   )}
                 </div>
@@ -926,25 +989,29 @@ export default function Vault() {
         
         {/* Delete Confirmation Modal */}
         {isDeleteModalOpen && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md relative animate-fadeIn p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div className="bg-black/70 backdrop-blur-xl border border-white/40 rounded-lg shadow-xl w-full max-w-md relative animate-fadeIn p-6" style={{
+              backdropFilter: 'blur(15px)',
+              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+            }}>
+              <h2 className="text-lg font-medium text-white mb-4 drop-shadow-md">
                 Confirm Deletion
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-white drop-shadow-sm mb-6">
                 Are you sure you want to delete {selectedLogsForDeletion.length} selected {selectedLogsForDeletion.length === 1 ? 'log' : 'logs'}? This action cannot be undone.
               </p>
               
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 bg-black/40 backdrop-blur-sm text-white drop-shadow-sm rounded hover:bg-black/50 transition-colors border border-white/30 hover:scale-105"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteLogs}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 bg-red-500/80 backdrop-blur-sm text-white rounded hover:bg-red-600/80 transition-colors border border-red-400/50 hover:scale-105 drop-shadow-sm"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Deleting...' : 'Delete'}
@@ -956,31 +1023,35 @@ export default function Vault() {
         
         {/* Rename Modal */}
         {isRenameModalOpen && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md relative animate-fadeIn p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div className="bg-black/70 backdrop-blur-xl border border-white/40 rounded-lg shadow-xl w-full max-w-md relative animate-fadeIn p-6" style={{
+              backdropFilter: 'blur(15px)',
+              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+            }}>
+              <h2 className="text-lg font-medium text-white mb-4 drop-shadow-md">
                 Edit Log Details
               </h2>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white drop-shadow-sm mb-1">
                   Log title
                 </label>
                 <input
                   type="text"
                   value={newLogTitle}
                   onChange={(e) => setNewLogTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-black/40 backdrop-blur-sm border border-white/30 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400/50 text-white placeholder-white/50 drop-shadow-sm"
                   placeholder="Enter a title for this log"
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white drop-shadow-sm mb-1">
                   Description
                 </label>
                 <textarea
                   value={newLogDescription}
                   onChange={(e) => setNewLogDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-black/40 backdrop-blur-sm border border-white/30 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400/50 text-white placeholder-white/50 drop-shadow-sm"
                   placeholder="Enter a description for this log"
                   rows={4}
                 />
@@ -988,13 +1059,13 @@ export default function Vault() {
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setIsRenameModalOpen(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 bg-black/40 backdrop-blur-sm text-white drop-shadow-sm rounded hover:bg-black/50 transition-colors border border-white/30 hover:scale-105"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRenameLog}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-500/80 backdrop-blur-sm text-white rounded hover:bg-blue-600/80 transition-colors border border-blue-400/50 hover:scale-105 drop-shadow-sm"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Saving...' : 'Save'}

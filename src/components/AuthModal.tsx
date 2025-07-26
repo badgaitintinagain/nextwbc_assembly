@@ -35,6 +35,26 @@ export default function AuthModal({
     setMessage(initialMessage);
   }, [initialMessage]);
 
+  // Add keyboard event listener for Escape key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   // Switch between sign in and sign up modes
   const toggleMode = () => {
     setMode(mode === "signin" ? "signup" : "signin");
@@ -136,36 +156,66 @@ export default function AuthModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md relative animate-fadeIn overflow-hidden">
+    <div 
+      className="modal-container animate-modalFadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleClose();
+        }
+      }}
+    >
+      <div 
+        className="modal-content w-full max-w-md mx-4 animate-modalSlideIn" 
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking modal content
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.25)',
+          borderRadius: '24px',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Decorative glass effect elements */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-30">
+          <div className="absolute top-4 left-4 w-16 h-16 bg-gradient-to-br from-white/20 to-transparent rounded-full blur-sm"></div>
+          <div className="absolute bottom-8 right-6 w-12 h-12 bg-gradient-to-tl from-blue-400/30 to-transparent rounded-full blur-sm"></div>
+          <div className="absolute top-1/2 right-8 w-8 h-8 bg-gradient-to-br from-purple-400/20 to-transparent rounded-full blur-sm"></div>
+        </div>
+
         {/* Close button */}
         <button 
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100" 
+          className="absolute top-4 right-4 text-white/70 hover:text-white transition-all duration-200 p-2 rounded-full hover:bg-white/20 backdrop-blur-sm z-20 cursor-pointer hover:scale-110" 
           onClick={handleClose}
           aria-label="Close"
+          type="button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        {/* Header with decorative element */}
-        <div className="bg-blue-600 h-2 w-full"></div>
+        {/* Header with liquid glass effect */}
+        <div className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 h-2 w-full backdrop-blur-sm"></div>
 
-        <div className="p-8">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold mb-1 text-gray-800">
-              {mode === "signin" ? "Welcome back" : "Create your account"}
-            </h2>
-            <p className="text-gray-500 text-sm">
-              {mode === "signin" 
-                ? "Sign in to access your account" 
-                : "Fill in your details to get started"}
-            </p>
+        <div className="p-8 relative z-10">
+          {/* Make sure content doesn't interfere with close button */}
+          <div className="pr-8">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-1 text-white">
+                {mode === "signin" ? "Welcome back" : "Create your account"}
+              </h2>
+              <p className="text-white/70 text-sm">
+                {mode === "signin" 
+                  ? "Sign in to access your account" 
+                  : "Fill in your details to get started"}
+              </p>
+            </div>
           </div>
           
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 text-sm border-l-4 border-red-500 flex items-start">
+            <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-200 p-4 rounded-2xl mb-6 text-sm flex items-start">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
@@ -174,7 +224,7 @@ export default function AuthModal({
           )}
           
           {message && (
-            <div className="bg-blue-50 text-blue-600 p-4 rounded-lg mb-6 text-sm border-l-4 border-blue-500 flex items-start">
+            <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-500/30 text-blue-200 p-4 rounded-2xl mb-6 text-sm flex items-start">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
@@ -185,7 +235,7 @@ export default function AuthModal({
           {mode === "signin" ? (
             <form onSubmit={handleSignIn} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-1.5">
                   Email address
                 </label>
                 <input
@@ -196,17 +246,17 @@ export default function AuthModal({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300"
                   placeholder="your@email.com"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="password" className="block text-sm font-medium text-white/90">
                     Password
                   </label>
-                  <a href="#" className="text-xs text-blue-600 hover:text-blue-800">
+                  <a href="#" className="text-xs text-blue-300 hover:text-blue-200 transition-colors">
                     Forgot password?
                   </a>
                 </div>
@@ -218,7 +268,7 @@ export default function AuthModal({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300"
                   placeholder="••••••••"
                 />
               </div>
@@ -226,10 +276,10 @@ export default function AuthModal({
               <div className="pt-2">
                 <button
                   type="submit"
-                  className={`w-full py-2.5 px-4 rounded-lg text-white font-medium transition-all ${
+                  className={`w-full py-2.5 px-4 rounded-2xl text-white font-medium transition-all duration-300 ${
                     loading 
-                      ? "bg-blue-400 cursor-not-allowed" 
-                      : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg"
+                      ? "bg-blue-400/50 cursor-not-allowed backdrop-blur-sm" 
+                      : "bg-gradient-to-r from-blue-500/80 to-purple-500/80 hover:from-blue-600/90 hover:to-purple-600/90 backdrop-blur-sm shadow-lg hover:shadow-xl"
                   }`}
                   disabled={loading}
                 >
@@ -248,7 +298,7 @@ export default function AuthModal({
           ) : (
             <form onSubmit={handleSignUp} className="space-y-5">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="name" className="block text-sm font-medium text-white/90 mb-1.5">
                   Full Name
                 </label>
                 <input
@@ -259,13 +309,13 @@ export default function AuthModal({
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300"
                   placeholder="John Doe"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-1.5">
                   Email address
                 </label>
                 <input
@@ -276,13 +326,13 @@ export default function AuthModal({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300"
                   placeholder="your@email.com"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="password" className="block text-sm font-medium text-white/90 mb-1.5">
                   Password
                 </label>
                 <input
@@ -293,13 +343,13 @@ export default function AuthModal({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300"
                   placeholder="••••••••"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/90 mb-1.5">
                   Confirm Password
                 </label>
                 <input
@@ -310,7 +360,7 @@ export default function AuthModal({
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-300"
                   placeholder="••••••••"
                 />
               </div>
@@ -318,12 +368,14 @@ export default function AuthModal({
               <div className="pt-2">
                 <button
                   type="submit"
-                  className={`w-full py-2.5 px-4 rounded-lg text-white font-medium transition-all ${
+                  className={`w-full py-2.5 px-4 rounded-2xl text-white font-medium transition-all duration-300 transform active:scale-95 ${
                     loading 
-                      ? "bg-blue-400 cursor-not-allowed" 
-                      : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg"
+                      ? "bg-blue-400/50 cursor-not-allowed backdrop-blur-sm" 
+                      : "bg-gradient-to-r from-blue-500/80 to-purple-500/80 hover:from-blue-600/90 hover:to-purple-600/90 backdrop-blur-sm shadow-lg hover:shadow-xl hover:scale-105"
                   }`}
                   disabled={loading}
+                  onMouseDown={(e) => e.currentTarget.classList.add('animate-buttonPulse')}
+                  onAnimationEnd={(e) => e.currentTarget.classList.remove('animate-buttonPulse')}
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
@@ -342,10 +394,10 @@ export default function AuthModal({
           <div className="mt-8 text-center">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
+                <div className="w-full border-t border-white/20"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
+                <span className="px-2 bg-transparent text-white/70">
                   {mode === "signin" ? "New to our platform?" : "Already have an account?"}
                 </span>
               </div>
@@ -354,7 +406,7 @@ export default function AuthModal({
             <button 
               type="button"
               onClick={toggleMode} 
-              className="mt-4 text-blue-600 hover:text-blue-800 font-medium transition-colors inline-flex items-center"
+              className="mt-4 text-blue-300 hover:text-blue-200 font-medium transition-colors inline-flex items-center bg-white/5 backdrop-blur-sm border border-white/10 px-4 py-2 rounded-full hover:bg-white/10 duration-300"
             >
               {mode === "signin" ? (
                 <>

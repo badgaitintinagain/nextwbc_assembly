@@ -91,7 +91,7 @@ const Header = () => {
 
     return (
         <>
-            <header className="bg-white text-black p-2 shadow-sm z-30 relative">
+            <header className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-md text-white p-2 shadow-lg z-50 border-b border-white/10">
                 <div className="container mx-auto">
                     <nav className="flex justify-between items-center">
                         {/* Logo */}
@@ -117,19 +117,19 @@ const Header = () => {
 
                         {/* Desktop Navigation Links */}
                         <div className="hidden md:flex items-center space-x-6">
-                            <Link href="/" className="hover:text-blue-600 transition text-sm">Home</Link>
-                            <Link href="/prediction" className="hover:text-blue-600 transition text-sm">Prediction</Link>
-                            <Link href="/vault" className="hover:text-blue-600 transition text-sm">Vault</Link>
+                            <Link href="/" className="hover:text-blue-400 transition text-sm text-white">Home</Link>
+                            <Link href="/prediction" className="hover:text-blue-400 transition text-sm text-white">Prediction</Link>
+                            <Link href="/vault" className="hover:text-blue-400 transition text-sm text-white">Vault</Link>
                             <Link 
                                 href="https://huggingface.co/badgaitintin/WBCYOLO_12s_01" 
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="hover:text-blue-600 transition text-sm"
+                                className="hover:text-blue-400 transition text-sm text-white"
                             >
                                 Download our Model
                             </Link>
                             {user.role === "ADMIN" && (
-                                <Link href="/admin/dashboard" className="hover:text-blue-600 transition text-sm">Admin</Link>
+                                <Link href="/admin/dashboard" className="hover:text-blue-400 transition text-sm text-white">Admin</Link>
                             )}
                         </div>
 
@@ -150,8 +150,8 @@ const Header = () => {
                                         </div>
                                         <div className="text-xs">
                                             <p className="font-medium">{user.username}</p>
-                                            <p className="text-xs text-gray-500">{user.email}</p>
-                                            <p className="text-xs text-blue-600">{user.role}</p>
+                                            <p className="text-xs text-white/70">{user.email}</p>
+                                            <p className="text-xs text-blue-400">{user.role}</p>
                                         </div>
                                     </div>
                                     
@@ -163,18 +163,12 @@ const Header = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex items-center space-x-3">
+                                <div className="flex items-center">
                                     <button 
                                         onClick={openSignInModal}
-                                        className="text-xs text-gray-600 hover:text-blue-600 transition"
+                                        className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs hover:bg-white/20 transition-all duration-300 shadow-lg"
                                     >
                                         Sign In
-                                    </button>
-                                    <button 
-                                        onClick={openSignUpModal}
-                                        className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-blue-700 transition"
-                                    >
-                                        Sign Up
                                     </button>
                                 </div>
                             )}
@@ -183,33 +177,33 @@ const Header = () => {
                     
                     {/* Mobile Menu - Slide down panel with blurred background */}
                     {mobileMenuOpen && (
-                        <div className="md:hidden mt-1 py-2 border-t border-gray-100 animate-fadeIn bg-white/40 backdrop-blur-sm">
+                        <div className="md:hidden mt-1 py-2 border-t border-white/20 animate-fadeIn bg-black/60 backdrop-blur-sm">
                             <div className="flex flex-col space-y-2">
-                                <Link href="/" className="hover:text-blue-600 transition py-1 text-sm">
+                                <Link href="/" className="hover:text-blue-400 transition py-1 text-sm text-white">
                                     Home
                                 </Link>
-                                <Link href="/prediction" className="hover:text-blue-600 transition py-1 text-sm">
+                                <Link href="/prediction" className="hover:text-blue-400 transition py-1 text-sm text-white">
                                     Prediction
                                 </Link>
-                                <Link href="/vault" className="hover:text-blue-600 transition py-1 text-sm">
+                                <Link href="/vault" className="hover:text-blue-400 transition py-1 text-sm text-white">
                                     Vault
                                 </Link>
                                 <Link 
                                     href="https://huggingface.co/badgaitintin/WBCYOLO_12s_01" 
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hover:text-blue-600 transition py-1 text-sm"
+                                    className="hover:text-blue-400 transition py-1 text-sm text-white"
                                 >
                                     Download our Model
                                 </Link>
                                 {user.role === "ADMIN" && (
-                                    <Link href="/admin/dashboard" className="hover:text-blue-600 transition py-1 text-sm">
+                                    <Link href="/admin/dashboard" className="hover:text-blue-400 transition py-1 text-sm text-white">
                                         Admin
                                     </Link>
                                 )}
                                 
                                 {/* Mobile auth buttons */}
-                                <div className="pt-1 border-t border-gray-100 mt-1">
+                                <div className="pt-1 border-t border-white/20 mt-1">
                                     {isAuthenticated ? (
                                         <div className="flex flex-col space-y-1">
                                             <div className="flex items-center gap-2 py-1">
@@ -218,7 +212,7 @@ const Header = () => {
                                                 </div>
                                                 <div className="text-xs">
                                                     <p className="font-medium">{user.username}</p>
-                                                    <p className="text-xs text-gray-500">{user.email}</p>
+                                                    <p className="text-xs text-white/70">{user.email}</p>
                                                 </div>
                                             </div>
                                             <button 
@@ -229,18 +223,12 @@ const Header = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col space-y-1">
+                                        <div className="flex flex-col space-y-2">
                                             <button 
                                                 onClick={openSignInModal}
-                                                className="text-gray-800 hover:text-blue-600 transition py-1 text-left text-xs"
+                                                className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs hover:bg-white/20 transition-all duration-300 shadow-lg w-full text-center"
                                             >
                                                 Sign In
-                                            </button>
-                                            <button 
-                                                onClick={openSignUpModal}
-                                                className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-blue-700 transition w-full text-center"
-                                            >
-                                                Sign Up
                                             </button>
                                         </div>
                                     )}

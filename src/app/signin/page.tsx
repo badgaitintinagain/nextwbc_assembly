@@ -30,7 +30,7 @@ function SignInContent() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-130px)] bg-gray-50">
+    <div className="min-h-[calc(100vh-130px)] bg-black">
       <AuthModal 
         isOpen={isModalOpen} 
         onClose={handleModalClose} 
@@ -46,7 +46,7 @@ export default function SignIn() {
     <>
       <Header />
       <Suspense fallback={
-        <div className="min-h-[calc(100vh-130px)] bg-gray-50 flex items-center justify-center">
+        <div className="min-h-[calc(100vh-130px)] bg-black flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg shadow-md">
             <p className="text-center">Loading sign in...</p>
           </div>

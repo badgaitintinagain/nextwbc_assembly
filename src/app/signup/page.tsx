@@ -24,7 +24,7 @@ export default function SignUp() {
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-130px)] bg-gray-50">
+      <div className="min-h-[calc(100vh-130px)] bg-black">
         <AuthModal 
           isOpen={isModalOpen} 
           onClose={handleModalClose} 
