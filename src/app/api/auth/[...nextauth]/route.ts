@@ -1,33 +1,34 @@
-import prisma from "@/app/lib/prisma";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import prisma from "@/lib/prisma";
 import { compare } from "bcrypt";
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Add console logs for debugging
-        console.log("Authorizing user...");
-        
         if (!credentials?.email || !credentials?.password) {
           console.log("Missing credentials");
           return null;
         }
 
         try {
-          // This was failing - ensure prisma is properly imported
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email,
             },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              password: true,
+              role: true,
+            }
           });
 
           if (!user) {
@@ -35,16 +36,13 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
           
-          console.log(`Found user: ${user.email}`);
-          
           const passwordValid = await compare(
             credentials.password,
             user.password
           );
 
-          console.log(`Password validation result: ${passwordValid}`);
-
           if (!passwordValid) {
+            console.log("Invalid password");
             return null;
           }
 
@@ -63,14 +61,12 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/signin",
-    signUp: "/signup",
   },
   session: {
     strategy: "jwt" as const,
-    maxAge: 15 * 60, // 15 minutes in seconds
+    maxAge: 24 * 60 * 60, // 24 hours in seconds
   },
-  // Add the secret configuration
-  secret: process.env.NEXTAUTH_SECRET || "YOUR_FALLBACK_SECRET_DO_NOT_USE_IN_PRODUCTION",
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -82,8 +78,10 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.sub;
-      session.user.role = token.role;
+      if (session.user) {
+        (session.user as any).id = token.sub;
+        (session.user as any).role = token.role;
+      }
       return session;
     }
   },

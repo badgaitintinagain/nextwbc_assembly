@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
 
   // Define protected paths
   const protectedPaths = ["/prediction"];
+  const adminPaths = ["/admin"];
   const authPaths = ["/signin", "/signup"];
   const currentPath = request.nextUrl.pathname;
 
@@ -22,11 +23,28 @@ export async function middleware(request: NextRequest) {
     currentPath.startsWith(path)
   );
 
+  // Check if the path is admin only
+  const isAdminPath = adminPaths.some(path => 
+    currentPath.startsWith(path)
+  );
+
   // Redirect to login if accessing protected path without authentication
   if (isProtectedPath && !isAuthenticated) {
     const signInUrl = new URL("/signin", request.url);
     signInUrl.searchParams.set("callbackUrl", request.url);
     return NextResponse.redirect(signInUrl);
+  }
+
+  // Redirect to login if accessing admin path without authentication
+  if (isAdminPath && !isAuthenticated) {
+    const signInUrl = new URL("/signin", request.url);
+    signInUrl.searchParams.set("callbackUrl", request.url);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Redirect non-admin users away from admin pages
+  if (isAdminPath && isAuthenticated && token.role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Redirect already logged in users away from login/register pages

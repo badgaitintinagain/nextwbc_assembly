@@ -1,5 +1,5 @@
 "use client"
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback, useMemo } from "react";
 
 interface ImageItem {
   file: File | null;
@@ -19,7 +19,7 @@ interface PredictResponse {
   annotated_image?: string;
 }
 
-const PredictDemo = () => {
+const PredictDemo = React.memo(() => {
   const [selectedImage, setSelectedImage] = useState<ImageItem>({
     file: null,
     previewUrl: '',
@@ -31,7 +31,19 @@ const PredictDemo = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Memoize computed values
+  const isSubmitDisabled = useMemo(() => 
+    isLoading || !selectedImage.file, 
+    [isLoading, selectedImage.file]
+  );
+
+  const detectionSummary = useMemo(() => {
+    if (!results || selectedImage.fileName !== results.filename) return null;
+    return results.detections.map(d => `${d.class} (${(d.confidence * 100).toFixed(1)}%)`).join(', ');
+  }, [results, selectedImage.fileName]);
+
+  // Use useCallback for event handlers to prevent unnecessary re-renders
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       // Create preview URL
@@ -54,20 +66,20 @@ const PredictDemo = () => {
       };
       reader.readAsDataURL(selectedFile);
     }
-  };
+  }, []);
 
-  const handleImageSelect = (image: ImageItem) => {
+  const handleImageSelect = useCallback((image: ImageItem) => {
     // Only allow selecting real uploaded images
     if (image.file !== null) {
       setSelectedImage(image);
     }
-  };
+  }, []);
 
-  const handleUploadClick = () => {
+  const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const handlePredict = async () => {
+  const handlePredict = useCallback(async () => {
     if (!selectedImage.file) return;
     
     setIsLoading(true);
@@ -110,10 +122,10 @@ const PredictDemo = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedImage]);
 
   return (
-    <div className="bg-white/60 backdrop-blur-lg border border-white/40 rounded-2xl shadow-xl p-4 w-full max-w-full md:max-w-[600px] mx-auto flex flex-col gap-4">
+    <div className="bg-white/60 backdrop-blur-lg border border-white/40 rounded-2xl shadow-xl p-4 w-full max-w-full md:max-w-[800px] mx-auto flex flex-col gap-4">
       <div className="flex flex-col min-h-0" style={{ maxHeight: '60vh' }}>
         {/* Centered content */}
         <div className="flex flex-col min-h-0 gap-2 justify-center" style={{ maxHeight: '50vh' }}>
@@ -122,7 +134,7 @@ const PredictDemo = () => {
             <button 
               className={`${isLoading ? 'bg-gray-300' : 'bg-blue-500 hover:bg-blue-600'} text-white px-5 py-2 rounded-full transition text-sm font-medium min-w-[90px] shadow-md hover:shadow-lg`} 
               onClick={handlePredict}
-              disabled={isLoading || !selectedImage.file}
+              disabled={isSubmitDisabled}
               style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.08)' }}
             >
               {isLoading ? 'Processing...' : 'Predict'}
@@ -151,7 +163,7 @@ const PredictDemo = () => {
                   {/* Results overlay */}
                   {results && selectedImage.fileName === results.filename && (
                     <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 text-xs rounded-b-xl z-20">
-                      <p>Detected: {results.detections.map(d => `${d.class} (${(d.confidence * 100).toFixed(1)}%)`).join(', ')}</p>
+                      <p>Detected: {detectionSummary}</p>
                     </div>
                   )}
                 </>
@@ -215,6 +227,7 @@ const PredictDemo = () => {
       </div>
     </div>
   );
-};
+});
 
+PredictDemo.displayName = 'PredictDemo';
 export default PredictDemo;

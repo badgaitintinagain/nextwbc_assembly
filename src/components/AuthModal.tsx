@@ -58,27 +58,31 @@ export default function AuthModal({
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true); // Set loading to true when submission starts
+    setLoading(true);
     
     try {
       const result = await signIn("credentials", {
         redirect: false,
-        email,
-        password
+        email: email.trim(),
+        password,
       });
       
       if (result?.error) {
+        console.error("Sign in error:", result.error);
         setError("Invalid email or password. Please check your credentials and try again.");
-        setLoading(false); // Reset loading state on error
+        setLoading(false);
         return;
       }
       
-      handleClose();
-      router.refresh();
+      if (result?.ok) {
+        handleClose();
+        // Force a hard refresh to ensure session is loaded
+        window.location.href = "/";
+      }
     } catch (error) {
       console.error("Sign in error:", error);
       setError("An unexpected error occurred. Please try again.");
-      setLoading(false); // Reset loading state on error
+      setLoading(false);
     }
   };
 
@@ -92,8 +96,13 @@ export default function AuthModal({
       setError("Passwords do not match.");
       return;
     }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
     
-    setLoading(true); // Set loading to true when submission starts
+    setLoading(true);
     
     try {
       const response = await fetch('/api/register', {
@@ -102,8 +111,8 @@ export default function AuthModal({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name,
-          email,
+          name: name.trim(),
+          email: email.trim(),
           password,
         }),
       });
@@ -111,14 +120,16 @@ export default function AuthModal({
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        throw new Error(data.message || 'Registration failed');
       }
       
-      // Redirect to sign in with success message
+      // Show success message and redirect to sign in
+      handleClose();
       router.push(`/signin?registered=true`);
     } catch (error: any) {
+      console.error("Registration error:", error);
       setError(error.message || "An error occurred during registration.");
-      setLoading(false); // Reset loading state on error
+      setLoading(false);
     }
   };
 

@@ -119,7 +119,7 @@ const Header = () => {
                         <div className="hidden md:flex items-center space-x-6">
                             <Link href="/" className="hover:text-blue-600 transition text-sm">Home</Link>
                             <Link href="/prediction" className="hover:text-blue-600 transition text-sm">Prediction</Link>
-                            <Link href="/tutorial" className="hover:text-blue-600 transition text-sm">Tutorial</Link>
+                            <Link href="https://huggingface.co/badgaitintin/WBCYOLO_12s_01" className="hover:text-blue-600 transition text-sm">Download our Model</Link>
                             <Link href="/vault" className="hover:text-blue-600 transition text-sm">Vault</Link>
                             {user.role === "ADMIN" && (
                                 <Link href="/admin/dashboard" className="hover:text-blue-600 transition text-sm">Admin</Link>
@@ -184,8 +184,8 @@ const Header = () => {
                                 <Link href="/prediction" className="hover:text-blue-600 transition py-1 text-sm">
                                     Prediction
                                 </Link>
-                                <Link href="/tutorial" className="hover:text-blue-600 transition py-1 text-sm">
-                                    Tutorial
+                                <Link href="https://huggingface.co/badgaitintin/WBCYOLO_12s_01" className="hover:text-blue-600 transition py-1 text-sm">
+                                    Download our Model
                                 </Link>
                                 <Link href="/vault" className="hover:text-blue-600 transition py-1 text-sm">
                                     Vault

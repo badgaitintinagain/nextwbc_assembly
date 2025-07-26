@@ -34,7 +34,7 @@ export default function Home() {
         </div>
 
 
-        <div className="px-4 w-full">
+        <div className="px-4 w-full flex justify-center">
           <PredictDemo />
         </div>
         <div className="mb-4 mt-8 px-4 text-center">

@@ -1,4 +1,4 @@
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 
@@ -14,9 +14,25 @@ export async function POST(request: Request) {
       );
     }
 
+    if (password.length < 6) {
+      return NextResponse.json(
+        { message: "Password must be at least 6 characters long" },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { message: "Invalid email format" },
+        { status: 400 }
+      );
+    }
+
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
     });
 
     if (existingUser) {
@@ -27,32 +43,42 @@ export async function POST(request: Request) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user with string value for role
+    // Create user
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: name.trim(),
+        email: email.toLowerCase(),
         password: hashedPassword,
-        role: "USER", // Use string instead of enum reference
+        role: "USER",
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      }
     });
 
     return NextResponse.json(
-      { message: "User created successfully", userId: user.id },
+      { 
+        message: "User created successfully", 
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      },
       { status: 201 }
     );
   } catch (error) {
     console.error("Registration error:", error);
     
-    // Provide more detailed error information in development
-    const errorMessage = process.env.NODE_ENV === 'development' 
-      ? `Something went wrong: ${error instanceof Error ? error.message : 'Unknown error'}`
-      : "Something went wrong";
-      
     return NextResponse.json(
-      { message: errorMessage },
+      { message: "Internal server error occurred during registration" },
       { status: 500 }
     );
   }

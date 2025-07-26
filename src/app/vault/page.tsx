@@ -409,10 +409,10 @@ export default function Vault() {
       <main className="relative z-20 flex flex-col h-screen">
         <Header />
         <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-4 overflow-hidden">
-          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-2xl shadow-2xl p-4 h-full">
+          <div className="bg-white/30 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl p-4 h-full">
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-4 h-full overflow-hidden">
               {/* Column 1: Log List - Takes full width on mobile, 3/12 columns on larger screens */}
-              <div className="md:col-span-1 lg:col-span-3 bg-white/90 border border-gray-100 rounded-2xl shadow-md flex flex-col h-full overflow-hidden">
+              <div className="md:col-span-1 lg:col-span-3 bg-white/90 border border-gray-100 rounded-l-2xl shadow-md flex flex-col h-full overflow-hidden">
                 <div className="flex items-center justify-between p-3 border-b border-gray-100 flex-shrink-0">
                   <h3 className="text-sm font-semibold text-gray-800">Prediction Logs</h3>
                   <div className="flex space-x-1">
@@ -527,7 +527,7 @@ export default function Vault() {
               </div>
               
               {/* Columns 2-3: Image Preview - Takes full width on mobile, 6/12 columns on larger screens */}
-              <div className="md:col-span-2 lg:col-span-6 bg-white/90 border border-gray-100 rounded-2xl shadow-md flex flex-col h-full overflow-hidden">
+              <div className="md:col-span-2 lg:col-span-6 bg-white/90 border border-gray-100 shadow-md flex flex-col h-full overflow-hidden">
                 {selectedLog ? (
                   <div className="h-full flex flex-col">
                     {/* Header - Hidden on mobile to save space */}
@@ -683,7 +683,7 @@ export default function Vault() {
               </div>
               
               {/* Column 4: Statistics and Description - Takes full width on mobile, 3/12 columns on larger screens */}
-              <div className="md:col-span-1 lg:col-span-3 bg-white/90 border border-gray-100 rounded-2xl shadow-md flex flex-col h-full overflow-hidden">
+              <div className="md:col-span-1 lg:col-span-3 bg-white/90 border border-gray-100 rounded-r-2xl shadow-md flex flex-col h-full overflow-hidden">
                 <div className="p-3 border-b border-gray-100 flex-shrink-0">
                   <h3 className="text-sm font-semibold text-gray-800">Details</h3>
                 </div>
