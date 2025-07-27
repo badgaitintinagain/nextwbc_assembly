@@ -123,15 +123,9 @@ const Header = () => {
                 <div className="container mx-auto">
                     <nav className="flex justify-between items-center">
                         {/* Logo */}
-                        <div className="w-28">
-                            <Link href="/">
-                                <Image 
-                                    src="/images/logonexwbc-1.png" 
-                                    alt="NextWBC Logo" 
-                                    width={28} 
-                                    height={28} 
-                                    className="object-contain"
-                                />
+                        <div className="w-28 flex items-center">
+                            <Link href="/" className="text-sm text-white hover:text-blue-400 transition">
+                                NextWBC
                             </Link>
                         </div>
 
