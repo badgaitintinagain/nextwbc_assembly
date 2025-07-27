@@ -5,28 +5,50 @@ import { authOptions } from "../auth/[...nextauth]/route";
 
 // บันทึก prediction logs
 export async function POST(request: Request) {
+  console.log("🔍 [API] POST /api/predictions started");
+  
   const session = await getServerSession(authOptions);
+  console.log("🔍 [API] Session check:", session?.user?.email ? "authenticated" : "not authenticated");
   
   if (!session?.user?.email) {
+    console.log("❌ [API] Unauthorized - no session");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   
   try {
+    console.log("🔍 [API] Parsing form data...");
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
-    const detections = JSON.parse(formData.get('detections') as string);
+    const detectionsString = formData.get('detections') as string;
+    
+    console.log("🔍 [API] Files count:", files.length);
+    console.log("🔍 [API] Detections string length:", detectionsString?.length || 0);
+    
+    let detections;
+    try {
+      detections = JSON.parse(detectionsString);
+      console.log("🔍 [API] Parsed detections:", detections.length);
+    } catch (parseError) {
+      console.error("❌ [API] Error parsing detections:", parseError);
+      return NextResponse.json({ error: "Invalid detections format" }, { status: 400 });
+    }
     
     // ค้นหาข้อมูลผู้ใช้ - เพิ่ม select เพื่อจำกัดข้อมูลที่ดึง
+    console.log("🔍 [API] Finding user:", session.user.email);
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: { id: true } // ดึงเฉพาะ id
     });
     
     if (!user) {
+      console.log("❌ [API] User not found");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
     
+    console.log("🔍 [API] User found:", user.id);
+    
     // สร้าง log entry ใหม่
+    console.log("🔍 [API] Creating prediction log...");
     const predictionLog = await prisma.predictionLog.create({
       data: {
         userId: user.id,
@@ -36,17 +58,23 @@ export async function POST(request: Request) {
       select: { id: true } // ดึงเฉพาะ id ที่ต้องการ
     });
     
+    console.log("✅ [API] Prediction log created:", predictionLog.id);
+    
     // สร้าง array สำหรับ bulk insert
+    console.log("🔍 [API] Processing images...");
     const imageData = [];
     
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const annotatedFileData = formData.get(`annotated_${i}`) as File;
       
+      console.log(`🔍 [API] Processing image ${i}: ${file.name}`);
+      
       const originalBuffer = Buffer.from(await file.arrayBuffer());
       let annotatedBuffer = null;
       
       if (annotatedFileData) {
+        console.log(`🔍 [API] Processing annotated image ${i}`);
         annotatedBuffer = Buffer.from(await annotatedFileData.arrayBuffer());
       }
       
@@ -61,11 +89,14 @@ export async function POST(request: Request) {
     
     // Bulk insert สำหรับประสิทธิภาพที่ดีกว่า
     if (imageData.length > 0) {
+      console.log("🔍 [API] Saving images to database...");
       await prisma.predictionImage.createMany({
         data: imageData
       });
+      console.log("✅ [API] Images saved successfully");
     }
     
+    console.log("✅ [API] Prediction saved successfully");
     return NextResponse.json({ 
       success: true, 
       predictionId: predictionLog.id 
@@ -76,8 +107,12 @@ export async function POST(request: Request) {
     });
     
   } catch (error) {
-    console.error("Error saving prediction:", error);
-    return NextResponse.json({ error: "Failed to save prediction" }, { status: 500 });
+    console.error("❌ [API] Error saving prediction:", error);
+    console.error("❌ [API] Error stack:", error.stack);
+    return NextResponse.json({ 
+      error: "Failed to save prediction", 
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
