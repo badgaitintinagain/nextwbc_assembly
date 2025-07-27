@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { handlePrismaQuery } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { authOptions } from "../../auth/[...nextauth]/route";
@@ -35,9 +35,11 @@ export async function POST(request: Request) {
     
     // ค้นหาข้อมูลผู้ใช้
     console.log("🔍 [SIMPLE API] Finding user:", session.user.email);
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { id: true }
+    const user = await handlePrismaQuery(async () => {
+      return await prisma.user.findUnique({
+        where: { email: session.user.email! },
+        select: { id: true }
+      });
     });
     
     if (!user) {
@@ -49,14 +51,21 @@ export async function POST(request: Request) {
     
     // สร้าง log entry ใหม่ - ไม่เก็บ images
     console.log("🔍 [SIMPLE API] Creating prediction log...");
-    const predictionLog = await prisma.predictionLog.create({
-      data: {
-        userId: user.id,
-        imageCount: files.length,
-        detections: detections
-      },
-      select: { id: true }
+    const predictionLog = await handlePrismaQuery(async () => {
+      return await prisma.predictionLog.create({
+        data: {
+          userId: user.id,
+          imageCount: files.length,
+          detections: detections
+        },
+        select: { id: true }
+      });
     });
+    
+    if (!predictionLog) {
+      console.log("❌ [SIMPLE API] Failed to create prediction log");
+      return NextResponse.json({ error: "Failed to create prediction log" }, { status: 500 });
+    }
     
     console.log("✅ [SIMPLE API] Prediction log created:", predictionLog.id);
     console.log("✅ [SIMPLE API] Prediction saved successfully (metadata only)");
