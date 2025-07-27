@@ -125,8 +125,8 @@ export default function Prediction() {
       );
       formData.append('detections', JSON.stringify(allDetections));
       
-      // บันทึกลงฐานข้อมูล (minimal version - no database)
-      const saveResponse = await fetch('/api/predictions/minimal', {
+      // บันทึกลงฐานข้อมูล (simple version - metadata only)
+      const saveResponse = await fetch('/api/predictions/simple', {
         method: 'POST',
         body: formData
       });
