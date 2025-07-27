@@ -1,6 +1,23 @@
 "use client"
 import React, { useRef, useState, useCallback, useMemo } from "react";
 
+// Add config import
+const API_CONFIG = {
+  // สำหรับการพัฒนา หรือเมื่อต้องการเชื่อมกับ backend ที่รันบนเครื่องตัวเอง
+  LOCALHOST_BACKEND_URL: 'http://localhost:8000',
+  // สำหรับ production ปกติ
+  PRODUCTION_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'https://your-backend-url.railway.app',
+};
+
+// Helper function to get backend URL
+const getBackendUrl = () => {
+  // ตรวจสอบว่าเป็น development หรือมี environment variable สำหรับ localhost
+  if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_LOCALHOST_BACKEND === 'true') {
+    return API_CONFIG.LOCALHOST_BACKEND_URL;
+  }
+  return API_CONFIG.PRODUCTION_BACKEND_URL;
+};
+
 interface ImageItem {
   file: File | null;
   previewUrl: string;
@@ -88,7 +105,8 @@ const PredictDemo = React.memo(() => {
       const formData = new FormData();
       formData.append('file', selectedImage.file);
       
-      const response = await fetch('http://localhost:8000/predict/', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/predict/`, {
         method: 'POST',
         body: formData,
       });

@@ -12,12 +12,21 @@ export const API_CONFIG = {
 
 // Helper function to get the appropriate backend URL
 export const getBackendUrl = () => {
-  // ถ้าเป็น production ให้ใช้ production URL
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return API_CONFIG.PRODUCTION_BACKEND_URL;
+  // Force localhost backend สำหรับการใช้กับ backend ที่รันบนเครื่องตัวเอง
+  // เปลี่ยนเป็น false หากต้องการใช้ production backend
+  const USE_LOCALHOST_BACKEND = true;
+  
+  if (USE_LOCALHOST_BACKEND || process.env.NEXT_PUBLIC_USE_LOCALHOST_BACKEND === 'true') {
+    return 'http://localhost:8000';
   }
+  
   // ถ้าเป็น development ให้ใช้ localhost
-  return API_CONFIG.BACKEND_URL;
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return API_CONFIG.BACKEND_URL;
+  }
+  
+  // ถ้าเป็น production ให้ใช้ production URL
+  return API_CONFIG.PRODUCTION_BACKEND_URL;
 };
 
 // API endpoints
