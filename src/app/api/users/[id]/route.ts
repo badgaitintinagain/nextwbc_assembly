@@ -86,21 +86,36 @@ export async function GET(
 // ฟังก์ชันสำหรับอัปเดตข้อมูลผู้ใช้
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        console.log("🔍 [USER API] PATCH /api/users/[id] started");
+        
         const session = await getServerSession(authOptions);
         if (!session?.user) {
+            console.log("❌ [USER API] Unauthorized - no session");
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
         
         const resolvedParams = await params;
         const userId = resolvedParams.id;
+        console.log("🔍 [USER API] User ID:", userId);
+        
         if ((session.user as unknown as { id: string; role: string }).id !== userId && (session.user as unknown as { id: string; role: string }).role !== 'ADMIN') {
+            console.log("❌ [USER API] Forbidden - not owner or admin");
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
+        
+        console.log("🔍 [USER API] Parsing form data...");
         const formData = await request.formData();
         const name = formData.get('name') as string;
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
         const avatarFile = formData.get('avatar') as File;
+        
+        console.log("🔍 [USER API] Form data parsed:", {
+            name: name ? "provided" : "not provided",
+            email: email ? "provided" : "not provided", 
+            password: password ? "provided" : "not provided",
+            avatar: avatarFile ? `${avatarFile.name} (${avatarFile.size} bytes)` : "not provided"
+        });
         const updateData: any = {};
         if (name && name.trim() !== '') updateData.name = name;
         if (email && email.trim() !== '') updateData.email = email;
@@ -108,32 +123,65 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             const hashed = await bcrypt.hash(password, 10);
             updateData.password = hashed;
         }
-        const updatedUser = await prisma.user.update({
-            where: { id: userId },
-            data: updateData,
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-            },
-        });
+        
+        console.log("🔍 [USER API] Update data:", Object.keys(updateData));
+        
+        // อัพเดตข้อมูลผู้ใช้ด้วย handlePrismaQuery
+        console.log("🔍 [USER API] Updating user data...");
+        const updatedUser = await handlePrismaQuery(() =>
+            prisma.user.update({
+                where: { id: userId },
+                data: updateData,
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                },
+            })
+        );
+
+        if (!updatedUser) {
+            console.error("❌ [USER API] Failed to update user data");
+            return NextResponse.json({ error: 'Failed to update user data' }, { status: 500 });
+        }
+        
+        console.log("✅ [USER API] User data updated successfully");
         let avatarUrl = '';
         if (avatarFile) {
-            await prisma.userImage.deleteMany({ where: { userId: userId, isProfile: true } });
+            // ลบรูปโปรไฟล์เก่า
+            await handlePrismaQuery(() =>
+                prisma.userImage.deleteMany({ 
+                    where: { userId: userId, isProfile: true } 
+                })
+            );
+            
             const buffer = Buffer.from(await avatarFile.arrayBuffer());
-            const newProfileImage = await prisma.userImage.create({
-                data: {
-                    userId: userId,
-                    imageData: buffer,
-                    mimeType: avatarFile.type,
-                    filename: avatarFile.name,
-                    isProfile: true
-                }
-            });
-            avatarUrl = `data:${newProfileImage.mimeType};base64,${buffer.toString('base64')}`;
+            
+            // สร้างรูปโปรไฟล์ใหม่
+            const newProfileImage = await handlePrismaQuery(() =>
+                prisma.userImage.create({
+                    data: {
+                        userId: userId,
+                        imageData: buffer,
+                        mimeType: avatarFile.type,
+                        filename: avatarFile.name,
+                        isProfile: true
+                    }
+                })
+            );
+            
+            if (newProfileImage) {
+                avatarUrl = `data:${newProfileImage.mimeType};base64,${buffer.toString('base64')}`;
+            }
         } else {
-            const existingImage = await prisma.userImage.findFirst({ where: { userId: userId, isProfile: true } });
+            // ดึงรูปโปรไฟล์ที่มีอยู่
+            const existingImage = await handlePrismaQuery(() =>
+                prisma.userImage.findFirst({ 
+                    where: { userId: userId, isProfile: true } 
+                })
+            );
+            
             if (existingImage) {
                 avatarUrl = `data:${existingImage.mimeType};base64,${Buffer.from(existingImage.imageData).toString('base64')}`;
             }

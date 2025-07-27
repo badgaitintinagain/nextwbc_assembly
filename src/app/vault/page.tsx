@@ -376,7 +376,7 @@ export default function Vault() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          logIds: selectedLogsForDeletion
+          ids: selectedLogsForDeletion // แก้จาก logIds เป็น ids
         }),
       });
       
