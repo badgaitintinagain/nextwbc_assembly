@@ -150,6 +150,8 @@ export async function GET() {
         userId: true,
         timestamp: true,
         imageCount: true,
+        title: true,
+        description: true,
         detections: true,
         images: {
           select: {
@@ -209,6 +211,8 @@ export async function GET() {
         userId: log.userId,
         timestamp: log.timestamp,
         imageCount: log.imageCount || 0,
+        title: log.title,
+        description: log.description,
         images: processedImages,
         detections: detections
       };

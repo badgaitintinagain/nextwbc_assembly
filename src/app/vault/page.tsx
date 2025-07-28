@@ -424,16 +424,18 @@ export default function Vault() {
         throw new Error(`Failed to update log: ${response.status}`);
       }
       
+      const updatedLogData = await response.json();
+      
       // Update the log in state
       setLogs(prevLogs => prevLogs.map(log => 
         log.id === logToRename.id 
-          ? { ...log, title: newLogTitle, description: newLogDescription }
+          ? { ...log, title: updatedLogData.title, description: updatedLogData.description }
           : log
       ));
       
       // Update selected log if it's the one being edited
       if (selectedLog && selectedLog.id === logToRename.id) {
-        setSelectedLog(prev => prev ? { ...prev, title: newLogTitle, description: newLogDescription } : null);
+        setSelectedLog(prev => prev ? { ...prev, title: updatedLogData.title, description: updatedLogData.description } : null);
       }
       
       setIsRenameModalOpen(false);
