@@ -16,8 +16,13 @@ export const getBackendUrl = () => {
   // เปลี่ยนเป็น false หากต้องการใช้ production backend
   const USE_LOCALHOST_BACKEND = true;
   
+  // สำหรับ self-hosted backend - ใส่ IP ของเครื่องที่รัน backend
+  const SELF_HOST_IP = process.env.NEXT_PUBLIC_SELF_HOST_IP || 'localhost';
+  const SELF_HOST_PORT = process.env.NEXT_PUBLIC_SELF_HOST_PORT || '8000';
+  
   if (USE_LOCALHOST_BACKEND || process.env.NEXT_PUBLIC_USE_LOCALHOST_BACKEND === 'true') {
-    return 'http://localhost:8000';
+    // ถ้าเป็น localhost หรือใช้ IP ของเครื่องคุณ
+    return `http://${SELF_HOST_IP}:${SELF_HOST_PORT}`;
   }
   
   // ถ้าเป็น development ให้ใช้ localhost
