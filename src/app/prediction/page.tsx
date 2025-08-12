@@ -73,24 +73,78 @@ export default function Prediction() {
     setIsLoading(true);
     
     try {
-      const formData = new FormData();
-      
-      // เพิ่มรูปภาพลงใน formData
-      for (let i = 0; i < selectedImages.length; i++) {
-        formData.append('files', selectedImages[i].file!);
-      }
-      
+      // Helper: resize image to max 1280x720 to reduce payload/memory
+      const resizeImage = async (
+        file: File,
+        maxWidth = 1280,
+        maxHeight = 720,
+        mimeType = 'image/jpeg',
+        quality = 0.82
+      ): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            try {
+              const { width, height } = img;
+              let newWidth = width;
+              let newHeight = height;
+              // Scale to fit within maxWidth x maxHeight while preserving aspect ratio
+              const widthRatio = maxWidth / width;
+              const heightRatio = maxHeight / height;
+              const ratio = Math.min(1, widthRatio, heightRatio);
+              newWidth = Math.round(width * ratio);
+              newHeight = Math.round(height * ratio);
+              const canvas = document.createElement('canvas');
+              canvas.width = newWidth;
+              canvas.height = newHeight;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) throw new Error('Canvas not supported');
+              ctx.drawImage(img, 0, 0, newWidth, newHeight);
+              canvas.toBlob((blob) => {
+                URL.revokeObjectURL(url);
+                if (!blob) return reject(new Error('Failed to create blob'));
+                resolve(blob);
+              }, mimeType, quality);
+            } catch (e) {
+              URL.revokeObjectURL(url);
+              reject(e);
+            }
+          };
+          img.onerror = (e) => {
+            URL.revokeObjectURL(url);
+            reject(e);
+          };
+          img.src = url;
+        });
+      };
+
       // ประมวลผลรูปภาพแต่ละรูป และเก็บผลลัพธ์
       const processingResults: PredictionResult[] = [];
+      const resizedOriginals: Blob[] = [];
+      const annotatedBlobs: (Blob | null)[] = [];
       
       for (let imgIndex = 0; imgIndex < selectedImages.length; imgIndex++) {
         const img = selectedImages[imgIndex];
+        // Resize original image to HD before inference and saving
+        let resizedBlob: Blob;
+        try {
+          resizedBlob = await resizeImage(img.file!);
+        } catch (e) {
+          console.warn('Resize failed, falling back to original file:', e);
+          resizedBlob = img.file!; // Fallback
+        }
+        resizedOriginals[imgIndex] = resizedBlob;
+
         const imgFormData = new FormData();
-        imgFormData.append('file', img.file!);
+        // Keep original filename but use JPEG to reduce size
+        const resizedFile = new File([resizedBlob], img.fileName.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+        imgFormData.append('file', resizedFile);
         
         const response = await fetch(`${getBackendUrl()}${API_ENDPOINTS.PREDICT}`, { 
           method: 'POST', 
-          body: imgFormData 
+          body: imgFormData,
+          cache: 'no-store'
         });
         
         if (!response.ok) throw new Error('Prediction failed');
@@ -101,21 +155,34 @@ export default function Prediction() {
         if (data.annotated_image) {
           const base64Response = await fetch(data.annotated_image);
           const blob = await base64Response.blob();
-          formData.append(`annotated_${imgIndex}`, blob);
+          annotatedBlobs[imgIndex] = blob;
+        } else {
+          annotatedBlobs[imgIndex] = null;
         }
         
         // เก็บผลลัพธ์เพื่อแสดงผลทันที
         processingResults.push({
           ...data,
           imageIndex: imgIndex,
-          predictedImage: { 
-            previewUrl: URL.createObjectURL(img.file!), 
+          predictedImage: {
+            // Preview from resized blob for consistency with saved data
+            previewUrl: URL.createObjectURL(resizedBlob), 
             fileName: img.fileName 
           },
           timestamp: new Date().toLocaleString()
         });
       }
       
+      // เตรียมข้อมูลบันทึก: แนบไฟล์ที่ถูกย่อขนาด + annotated
+      const formData = new FormData();
+      for (let i = 0; i < resizedOriginals.length; i++) {
+        const fname = selectedImages[i].fileName.replace(/\.[^.]+$/, '.jpg');
+        formData.append('files', new File([resizedOriginals[i]], fname, { type: 'image/jpeg' }));
+        if (annotatedBlobs[i]) {
+          formData.append(`annotated_${i}`, annotatedBlobs[i]!);
+        }
+      }
+
       // เพิ่มข้อมูล detections ลงใน formData
       const allDetections = processingResults.flatMap((result, imgIndex) => 
         result.detections.map((detection: Detection) => ({
