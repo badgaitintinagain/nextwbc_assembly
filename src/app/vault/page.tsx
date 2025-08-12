@@ -85,7 +85,10 @@ export default function Vault() {
 
       try {
         setIsLoading(true);
-        const response = await fetch('/api/predictions');
+        const response = await fetch('/api/predictions', {
+          cache: 'no-store',
+          credentials: 'include'
+        });
         
         if (!response.ok) {
           throw new Error(`Failed to fetch prediction logs: ${response.status} ${response.statusText}`);

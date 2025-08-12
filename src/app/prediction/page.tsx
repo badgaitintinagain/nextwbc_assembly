@@ -128,7 +128,10 @@ export default function Prediction() {
       // บันทึกลงฐานข้อมูล (optimized version - with images)
       const saveResponse = await fetch('/api/predictions/optimized', {
         method: 'POST',
-        body: formData
+        body: formData,
+        // Ensure auth cookies are included and bypass any caches
+        credentials: 'include',
+        cache: 'no-store'
       });
       
       if (!saveResponse.ok) {

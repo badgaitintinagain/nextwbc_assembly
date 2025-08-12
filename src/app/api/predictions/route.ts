@@ -219,9 +219,11 @@ export async function GET() {
     });
 
     console.log("Successfully processed all logs");
+    // Disable caching so new predictions appear immediately after saving
     return NextResponse.json(processedLogs, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache'
       }
     });
   } catch (error) {
